@@ -1401,22 +1401,18 @@ class PromptKunContainer extends HTMLElement {
         display: flex;
         flex-direction: column;
         width: 100%;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        background-color: #f9f9f9;
-        padding: 8px;
+        background-color: transparent;
       }
       
       .groups-container {
         display: flex;
         flex-direction: column;
-        gap: 8px;
       }
       
       .controls {
         display: flex;
         justify-content: flex-end;
-        margin-top: 8px;
+        margin-top: 4px;
       }
       
       button {
@@ -1462,8 +1458,8 @@ class PromptKunContainer extends HTMLElement {
     controls.appendChild(addGroupBtn);
 
     // コンテナに追加
-    container.appendChild(groupsContainer);
     container.appendChild(controls);
+    container.appendChild(groupsContainer);
 
     // Shadow DOMに追加
     this.shadowRoot.innerHTML = "";
