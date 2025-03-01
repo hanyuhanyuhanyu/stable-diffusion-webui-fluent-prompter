@@ -509,7 +509,7 @@ class PromptKunText extends HTMLElement {
         if (!this.enabled) return prompt;
         let text = this.text;
         let factor = this.factor;
-        if (!this.factor || this.facrot === 1) factor = option.factor;
+        if (!this.factor) factor = option.factor;
         if (factor === 1) factor = null;
         if (factor) text = `(${text}:${factor})`;
         if (this.isNegative) prompt.negative.push(text);
@@ -517,6 +517,15 @@ class PromptKunText extends HTMLElement {
         return prompt;
       },
     };
+  }
+
+  fromObject(obj) {
+    if (typeof obj.enabled === "boolean") this.enabled = obj.enabled;
+    if (typeof obj.text === "string") this.text = obj.text;
+    if (typeof obj.factor === "number") this.factor = obj.factor;
+    if (obj.isNegative === true) this.text = `${NEGATIVE_PREFIX}${this.text}`;
+    this.render();
+    return this;
   }
 }
 
@@ -684,6 +693,19 @@ class PromptKunTexts extends HTMLElement {
   // 初期テキストの追加
   addInitialTexts(texts = []) {
     texts.forEach((t) => this._addText(t));
+  }
+
+  fromObject(obj) {
+    if (obj.texts && Array.isArray(obj.texts)) {
+      // 既存のテキストをクリア
+      this.getAllTexts().forEach((text) => text.remove());
+      // 新しいテキストを追加
+      obj.texts.forEach((textObj) => {
+        const text = this._addText();
+        text.fromObject(textObj);
+      });
+    }
+    return this;
   }
 }
 
@@ -1405,6 +1427,32 @@ class PromptKunGroup extends HTMLElement {
       },
     };
   }
+
+  fromObject(obj) {
+    if (typeof obj.enabled === "boolean") this.enabled = obj.enabled;
+    if (typeof obj.name === "string") this.name = obj.name;
+    if (typeof obj.factor === "number") this.factor = obj.factor;
+    if (obj.isNegative === true) this.name = `${NEGATIVE_PREFIX}${this.name}`;
+    this.render();
+
+    // Textsの設定
+    if (obj.texts) {
+      const texts = this.getTexts();
+      texts.fromObject(obj.texts);
+    }
+
+    // サブグループの設定
+    if (obj.groups && Array.isArray(obj.groups)) {
+      // 既存のグループをクリア
+      this.getAllGroups().forEach((group) => group.remove());
+      // 新しいグループを追加
+      obj.groups.forEach((groupObj) => {
+        const group = this._addGroup();
+        group.fromObject(groupObj);
+      });
+    }
+    return this;
+  }
 }
 
 // PromptKunContainerコンポーネントの実装（Groupを束ねるだけのルートコンテナ）
@@ -1599,6 +1647,22 @@ class PromptKunContainer extends HTMLElement {
       },
     };
   }
+
+  fromObject(obj) {
+    if (obj === null || typeof obj !== "object") return this;
+    // グループの設定
+    if (obj.groups && Array.isArray(obj.groups)) {
+      // 既存のグループをクリア
+      this.getAllGroups().forEach((group) => group.remove());
+      // 新しいグループを追加
+      (obj.groups || []).forEach((groupObj) => {
+        const group = this._addGroup();
+        group.fromObject(groupObj);
+      });
+    }
+
+    return this;
+  }
 }
 
 // カスタム要素の登録
@@ -1608,6 +1672,7 @@ customElements.define("prompt-kun-group", PromptKunGroup);
 customElements.define("prompt-kun-container", PromptKunContainer);
 
 // 初期化関数
+const PROMPT_STORAGE_KEY = "prompt-kun-latest-setting";
 function initPromptKun(formRootId, logElementId = null) {
   const formRoot = document.getElementById(formRootId);
   if (!formRoot) return null;
@@ -1621,12 +1686,12 @@ function initPromptKun(formRootId, logElementId = null) {
   }
   const container = document.createElement("prompt-kun-container");
 
-  // 変更イベントのリスナー
-  container.addEventListener("change", () => {
+  const onChange = () => {
     logger.log("コンテナが変更されました");
     const obj = container.toObject();
     const { positive, negative } = toEachPrompt(obj);
     try {
+      localStorage.setItem(PROMPT_STORAGE_KEY, JSON.stringify(obj));
       document.querySelector("#txt2img_prompt textarea").value = positive
         .filter((a) => a.trim().length > 0)
         .join(",");
@@ -1636,7 +1701,11 @@ function initPromptKun(formRootId, logElementId = null) {
     } catch (e) {
       console.error(e);
     }
-  });
+  };
+  container.fromObject(JSON.parse(localStorage.getItem(PROMPT_STORAGE_KEY)));
+  onChange();
+  // 変更イベントのリスナー
+  container.addEventListener("change", onChange);
 
   // DOMに追加
   formRoot.appendChild(container);
