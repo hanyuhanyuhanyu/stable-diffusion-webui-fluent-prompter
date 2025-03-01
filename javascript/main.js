@@ -85,6 +85,12 @@ class PromptKunText extends HTMLElement {
     this._text = value || "";
     this.setAttribute("text", this._text);
   }
+  get parent() {
+    return this._parent;
+  }
+  set parent(parent) {
+    this._parent = parent;
+  }
 
   // テキストがネガティブかどうかを判定
   isNegative() {
@@ -155,12 +161,88 @@ class PromptKunText extends HTMLElement {
 
       // ドラッグ中のデータを設定
       e.dataTransfer.effectAllowed = "move";
+
+      // 親要素にドラッグ中の要素を通知
+      if (this.parent) {
+        this.parent._draggedElement = this;
+      }
     });
 
     // ドラッグ終了イベント
     this.addEventListener("dragend", (e) => {
       container.style.opacity = "";
       this.removeAttribute("draggable");
+
+      // 親要素のドラッグ中要素をクリア
+      if (this.parent) {
+        this.parent._draggedElement = null;
+      }
+    });
+
+    // ドラッグオーバーイベント
+    this.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+
+      const parent = this.parent;
+      if (
+        !parent ||
+        !parent._draggedElement ||
+        parent._draggedElement === this
+      ) {
+        return;
+      }
+
+      // マウス位置を取得
+      const rect = this.getBoundingClientRect();
+      const midX = rect.left + rect.width / 2;
+
+      // 左半分か右半分かによってスタイルを変更
+      if (e.clientX < midX) {
+        this.style.borderLeft = "3px solid blue";
+        this.style.borderRight = "";
+      } else {
+        this.style.borderLeft = "";
+        this.style.borderRight = "3px solid blue";
+      }
+    });
+
+    // ドラッグリーブイベント
+    this.addEventListener("dragleave", (e) => {
+      this.style.borderLeft = "";
+      this.style.borderRight = "";
+    });
+
+    // ドロップイベント
+    this.addEventListener("drop", (e) => {
+      e.preventDefault();
+      this.style.borderLeft = "";
+      this.style.borderRight = "";
+
+      const parent = this.parent;
+      if (
+        !parent ||
+        !parent._draggedElement ||
+        parent._draggedElement === this
+      ) {
+        return;
+      }
+
+      // マウス位置を取得
+      const rect = this.getBoundingClientRect();
+      const midX = rect.left + rect.width / 2;
+
+      // 左半分か右半分かによって挿入位置を決定
+      if (e.clientX < midX) {
+        // 左半分：このTextの前に挿入
+        parent.insertBefore(parent._draggedElement, this);
+      } else {
+        // 右半分：このTextの後に挿入
+        parent.insertAfter(parent._draggedElement, this);
+      }
+
+      // 変更イベントを発火
+      parent.dispatchEvent(new CustomEvent("change"));
     });
 
     // 左クリック: 無効時に有効化
@@ -204,6 +286,9 @@ class PromptKunText extends HTMLElement {
           detail: { property: "text", value: this._text },
         })
       );
+    });
+    textInput.addEventListener("blur", () => {
+      if (this.text.trim().length === 0) this.remove();
     });
   }
 
@@ -318,6 +403,22 @@ class PromptKunTexts extends HTMLElement {
     this.render();
   }
 
+  // 要素を指定した要素の前に挿入
+  insertBefore(element, referenceElement) {
+    const container = this.shadowRoot.querySelector(".texts-container");
+    container.insertBefore(element, referenceElement);
+  }
+
+  // 要素を指定した要素の後に挿入
+  insertAfter(element, referenceElement) {
+    const container = this.shadowRoot.querySelector(".texts-container");
+    if (referenceElement.nextSibling) {
+      container.insertBefore(element, referenceElement.nextSibling);
+    } else {
+      container.appendChild(element);
+    }
+  }
+
   // 初期描画
   connectedCallback() {
     if (!this.shadowRoot.querySelector(".container")) {
@@ -408,6 +509,7 @@ class PromptKunTexts extends HTMLElement {
   _addText(text = "") {
     const element = document.createElement("prompt-kun-text");
     element.enabled = true;
+    element.parent = this;
     const input = element.shadowRoot.querySelector(".text-input");
 
     // イベントリスナー
