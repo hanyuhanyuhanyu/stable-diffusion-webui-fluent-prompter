@@ -1552,15 +1552,10 @@ function initPromptKun(formRootId, logElementId = null) {
       logger.setLogElement(logElement);
     }
   }
-
-  // Textsコンポーネントを作成
-  const texts = document.createElement("prompt-kun-texts");
-
-  // 初期テキストを追加
-  texts.addInitialTexts(["beautiful landscape", "n!simple background"]);
+  const container = document.createElement("prompt-kun-container");
 
   // 変更イベントのリスナー
-  texts.addEventListener("change", () => {
+  container.addEventListener("change", () => {
     const prompts = texts.generatePrompt();
     logger.log(
       `プロンプト生成: Positive="${prompts.positive}", Negative="${prompts.negative}"`
@@ -1568,10 +1563,10 @@ function initPromptKun(formRootId, logElementId = null) {
   });
 
   // DOMに追加
-  formRoot.appendChild(texts);
+  formRoot.appendChild(container);
 
   logger.log("プロンプト君初期化完了");
-  return texts;
+  return container;
 }
 
 // Stable Diffusion Web UI用の初期化
