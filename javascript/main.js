@@ -277,6 +277,7 @@ class PromptKunText extends HTMLElement {
 
     // 左クリック: 無効時に有効化
     container.addEventListener("click", (e) => {
+      e.stopPropagation();
       if (!this._enabled) {
         this.enabled = true;
         this.dispatchEvent(
