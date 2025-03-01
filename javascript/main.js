@@ -182,6 +182,7 @@ class PromptKunText extends HTMLElement {
     // イベントリスナーの設定
     // ドラッグ開始イベント
     this.addEventListener("dragstart", (e) => {
+      e.stopPropagation();
       // ドラッグ中の見た目を調整
       setTimeout(() => {
         container.style.opacity = "0.4";
@@ -198,6 +199,7 @@ class PromptKunText extends HTMLElement {
 
     // ドラッグ終了イベント
     this.addEventListener("dragend", (e) => {
+      e.stopPropagation();
       container.style.opacity = "";
       this.removeAttribute("draggable");
 
@@ -879,6 +881,7 @@ class PromptKunGroup extends HTMLElement {
     // イベントリスナーの設定
     // ドラッグ開始イベント
     this.addEventListener("dragstart", (e) => {
+      e.stopPropagation();
       // ドラッグ中の見た目を調整
       setTimeout(() => {
         container.style.opacity = "0.4";
@@ -895,6 +898,7 @@ class PromptKunGroup extends HTMLElement {
 
     // ドラッグ終了イベント
     this.addEventListener("dragend", (e) => {
+      e.stopPropagation();
       container.style.opacity = "";
       this.removeAttribute("draggable");
 
