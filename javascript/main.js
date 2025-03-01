@@ -710,6 +710,7 @@ class PromptKunGroup extends HTMLElement {
     this._name = "Group";
     this._factor = null; // factorの初期値はnull（表示しない）
     this._draggedElement = null;
+    this._isOpen = true; // アコーディオンの初期状態は開いている
 
     this.render();
   }
@@ -868,22 +869,18 @@ class PromptKunGroup extends HTMLElement {
     content.appendChild(textsContainer);
     content.appendChild(groupsContainer);
 
-    // 操作ボタンを格納するコンテナ
-    const controls = document.createElement("div");
-    controls.className = "controls";
-
     // グループ追加ボタン
     const addGroupBtn = document.createElement("button");
     addGroupBtn.textContent = "add group";
+    addGroupBtn.className = "add-group-btn";
     addGroupBtn.addEventListener("click", () => this._addGroup());
 
-    // ボタンを追加
-    controls.appendChild(addGroupBtn);
+    // ヘッダーにボタンを追加
+    header.appendChild(addGroupBtn);
 
     // コンテナに要素を追加
     container.appendChild(header);
     container.appendChild(content);
-    container.appendChild(controls);
 
     this.shadowRoot.appendChild(style);
     this.shadowRoot.appendChild(container);
@@ -982,14 +979,32 @@ class PromptKunGroup extends HTMLElement {
       parent.dispatchEvent(new CustomEvent("change"));
     });
 
-    // 左クリック: 無効時に有効化
+    // 左クリック: 無効時に有効化、有効時はアコーディオン開閉
     header.addEventListener("click", (e) => {
+      // ボタンクリックの場合は処理しない（イベントバブリングを防止）
+      if (e.target.tagName === "BUTTON" || e.target.closest("button")) {
+        return;
+      }
+
+      // 編集可能要素がフォーカスされている場合は処理しない
+      if (e.target.isContentEditable) {
+        return;
+      }
+
       if (!this._enabled) {
+        // 無効 → 有効
         this.enabled = true;
         this.dispatchEvent(
           new CustomEvent("change", {
             detail: { property: "enabled", value: this.enabled },
           })
+        );
+      } else {
+        // アコーディオン開閉
+        this._isOpen = !this._isOpen;
+        this.updateContentVisibility();
+        logger.log(
+          `グループ ${this._isOpen ? "展開" : "折りたたみ"}: ${this.name}`
         );
       }
     });
@@ -1070,12 +1085,23 @@ class PromptKunGroup extends HTMLElement {
     });
   }
 
+  // コンテンツの表示/非表示を切り替える
+  updateContentVisibility() {
+    const content = this.shadowRoot.querySelector(".group-content");
+    if (content) {
+      content.style.display = this._isOpen ? "block" : "none";
+    }
+  }
+
   // スタイルと属性の更新（DOMを再作成せずに更新）
   updateStyles() {
     if (!this.shadowRoot.querySelector(".container")) return;
 
     const style = this.shadowRoot.querySelector("style");
     const nameInput = this.shadowRoot.querySelector(".name-input");
+
+    // コンテンツの表示/非表示を更新
+    this.updateContentVisibility();
 
     // スタイルの更新
     style.textContent = `
@@ -1104,6 +1130,12 @@ class PromptKunGroup extends HTMLElement {
         border-bottom: 1px solid #ccc;
         border-radius: 4px 4px 0 0;
         cursor: pointer;
+        position: relative;
+      }
+      
+      .add-group-btn {
+        position: absolute;
+        right: 8px;
       }
       
       .drag-icon {
