@@ -353,9 +353,6 @@ class PromptKunTexts extends HTMLElement {
         min-height: 36px;
       }
       
-      .texts-container.drag-over {
-        background-color: rgba(0, 0, 0, 0.05);
-      }
       
       .controls {
         display: flex;
@@ -405,57 +402,6 @@ class PromptKunTexts extends HTMLElement {
     this.shadowRoot.innerHTML = "";
     this.shadowRoot.appendChild(style);
     this.shadowRoot.appendChild(container);
-
-    // ドラッグ&ドロップの設定
-    this._setupDragAndDrop(textsContainer);
-  }
-
-  // ドラッグ&ドロップの設定
-  _setupDragAndDrop(container) {
-    // コンテナのドラッグオーバー
-    container.addEventListener("dragover", (e) => {
-      e.preventDefault();
-      container.classList.add("drag-over");
-    });
-
-    // コンテナからドラッグ離脱
-    container.addEventListener("dragleave", () => {
-      container.classList.remove("drag-over");
-    });
-
-    // コンテナにドロップ
-    container.addEventListener("drop", (e) => {
-      e.preventDefault();
-      container.classList.remove("drag-over");
-
-      if (this._draggedElement && e.target === container) {
-        container.appendChild(this._draggedElement);
-        this.dispatchEvent(new CustomEvent("change"));
-        logger.log(`${this._draggedElement.text} を最後に移動`);
-      }
-    });
-
-    // 要素のドラッグ開始
-    this.addEventListener(
-      "dragstart",
-      (e) => {
-        if (e.target.tagName.toLowerCase() === "prompt-kun-text") {
-          this._draggedElement = e.target;
-          logger.log(`ドラッグ開始: ${this._draggedElement.text}`);
-        }
-      },
-      true
-    );
-
-    // 要素のドラッグ終了
-    this.addEventListener(
-      "dragend",
-      () => {
-        logger.log("ドラッグ終了");
-        this._draggedElement = null;
-      },
-      true
-    );
   }
 
   // テキスト要素の追加
