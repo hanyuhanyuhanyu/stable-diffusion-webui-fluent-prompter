@@ -2,8 +2,9 @@ const containerIds = {
   root: "prompt-kun-container",
   form: "prompt-kun-form",
 };
-function toEachPrompt(obj) {}
-function toEachPromptRecur(obj, pos, neg) {}
+function toEachPrompt(obj) {
+  return obj.toPrompt();
+}
 
 // 定数
 const NEGATIVE_PREFIX = "n!"; // Negativeプロンプトの接頭辞
@@ -11,6 +12,7 @@ const NEGATIVE_PREFIX = "n!"; // Negativeプロンプトの接頭辞
 class Logger {
   constructor(logElement = null) {
     this._logElement = logElement;
+    this.suppress = true;
   }
 
   // ログ要素の設定
@@ -20,6 +22,7 @@ class Logger {
 
   // ログの追加
   log(message) {
+    if (this.suppress) return;
     // コンソールに出力
     console.log(message);
     // ログ要素がある場合はそこにも追加
@@ -80,7 +83,10 @@ class PromptKunText extends HTMLElement {
   }
 
   get text() {
-    return this._text.replace(/(\(|\))/g, "\\$1");
+    return this._text
+      .trim()
+      .replace(new RegExp("^" + NEGATIVE_PREFIX), "")
+      .replace(/(\(|\))/g, "\\$1");
   }
 
   set text(value) {
@@ -492,7 +498,22 @@ class PromptKunText extends HTMLElement {
       enabled: this.enabled,
       text: this.text,
       factor: this.factor,
-      isNegative: !this.isNegative(),
+      isNegative: this.isNegative(),
+      toPrompt(option) {
+        const prompt = {
+          positive: [],
+          negative: [],
+        };
+        if (!this.enabled) return prompt;
+        let text = this.text;
+        let factor = this.factor;
+        if (!this.factor || this.facrot === 1) factor = option.factor;
+        if (factor === 1) factor = null;
+        if (factor) text = `(${text}:${factor})`;
+        if (this.isNegative) prompt.negative.push(text);
+        else prompt.positive.push(text);
+        return prompt;
+      },
     };
   }
 }
@@ -683,6 +704,18 @@ class PromptKunTexts extends HTMLElement {
   toObject() {
     return {
       texts: this.getAllTexts().map((t) => t.toObject()),
+      toPrompt(option) {
+        return this.texts
+          .map((t) => t.toPrompt(option))
+          .reduce(
+            (acc, cur) => {
+              acc.positive.push(...cur.positive);
+              acc.negative.push(...cur.negative);
+              return acc;
+            },
+            { positive: [], negative: [] }
+          );
+      },
     };
   }
 
@@ -1380,8 +1413,30 @@ class PromptKunGroup extends HTMLElement {
       name: this.name,
       enabled: this.enabled,
       texts: this.getTexts().toObject(),
+      factor: this.factor,
       groups: this.getAllGroups().map((g) => g.toObject()),
       isNegative: this.isNegative(),
+      toPrompt() {
+        const prompt = {
+          positive: [],
+          negative: [],
+        };
+        if (!this.enabled) return prompt;
+        const tp = this.texts.toPrompt({ factor: this.factor });
+        prompt.positive.push(...tp.positive);
+        prompt.negative.push(...tp.negative);
+        this.groups.forEach((g) => {
+          const { positive, negative } = g.toPrompt();
+          prompt.positive.push(...positive);
+          prompt.negative.push(...negative);
+        });
+        if (this.isNegative) {
+          const buf = prompt.positive;
+          prompt.positive = prompt.negative;
+          prompt.negative = buf;
+        }
+        return prompt;
+      },
     };
   }
 }
@@ -1565,6 +1620,17 @@ class PromptKunContainer extends HTMLElement {
   toObject() {
     return {
       groups: this.getAllGroups().map((g) => g.toObject()),
+      toPrompt() {
+        return this.groups.reduce(
+          (acc, cur) => {
+            const { positive, negative } = cur.toPrompt();
+            acc.positive.push(...positive);
+            acc.negative.push(...negative);
+            return acc;
+          },
+          { positive: [], negative: [] }
+        );
+      },
     };
   }
 }
@@ -1592,7 +1658,18 @@ function initPromptKun(formRootId, logElementId = null) {
   // 変更イベントのリスナー
   container.addEventListener("change", () => {
     logger.log("コンテナが変更されました");
-    logger.log(container.toObject());
+    const obj = container.toObject();
+    const { positive, negative } = toEachPrompt(obj);
+    try {
+      document.querySelector("#txt2img_prompt textarea").value = positive
+        .filter((a) => a.trim().length > 0)
+        .join(",");
+      document.querySelector("#txt2img_neg_prompt textarea").value = negative
+        .filter((a) => a.trim().length > 0)
+        .join(",");
+    } catch (e) {
+      console.error(e);
+    }
   });
 
   // DOMに追加

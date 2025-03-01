@@ -115,73 +115,73 @@
 
     <script type="text/javascript">
       // DOMが読み込まれたら実行
-      document.addEventListener("DOMContentLoaded", function () {
-        // Textsコンポーネントの初期化
-        initPromptKun("prompt-kun-form", "log");
+      // document.addEventListener("DOMContentLoaded", function () {
+      //   // Textsコンポーネントの初期化
+      //   // initPromptKun("prompt-kun-form", "log");
 
-        // Groupコンポーネントの初期化
-        const groupTest = document.getElementById("group-test");
-        const rootGroup = document.createElement("prompt-kun-group");
-        rootGroup.name = "ルートグループ";
+      //   // Groupコンポーネントの初期化
+      //   const groupTest = document.getElementById("group-test");
+      //   const rootGroup = document.createElement("prompt-kun-group");
+      //   rootGroup.name = "ルートグループ";
 
-        // Textsにテキストを追加
-        const texts = rootGroup.getTexts();
-        texts._addText("メインテキスト");
+      //   // Textsにテキストを追加
+      //   const texts = rootGroup.getTexts();
+      //   texts._addText("メインテキスト");
 
-        // サブグループを追加
-        const subGroup1 = rootGroup._addGroup("サブグループ1");
-        subGroup1.getTexts()._addText("サブテキスト1");
+      //   // サブグループを追加
+      //   const subGroup1 = rootGroup._addGroup("サブグループ1");
+      //   subGroup1.getTexts()._addText("サブテキスト1");
 
-        const subGroup2 = rootGroup._addGroup("サブグループ2");
-        subGroup2.getTexts()._addText("サブテキスト2");
+      //   const subGroup2 = rootGroup._addGroup("サブグループ2");
+      //   subGroup2.getTexts()._addText("サブテキスト2");
 
-        // ネストされたグループを追加
-        const nestedGroup = subGroup1._addGroup("ネストグループ");
-        nestedGroup.getTexts()._addText("ネストテキスト");
+      //   // ネストされたグループを追加
+      //   const nestedGroup = subGroup1._addGroup("ネストグループ");
+      //   nestedGroup.getTexts()._addText("ネストテキスト");
 
-        // DOMに追加
-        groupTest.appendChild(rootGroup);
+      //   // DOMに追加
+      //   groupTest.appendChild(rootGroup);
 
-        // プロンプトテキスト取得ボタンの設定
-        document
-          .getElementById("get-prompt-btn")
-          .addEventListener("click", function () {
-            const promptText = rootGroup.toObject();
-            console.log(JSON.stringify(promptText, null, 2));
-            const resultBox = document.getElementById("prompt-result");
-            resultBox.innerHTML = JSON.stringify(promptText, null, 2)
-              .replace(/$/g, "<br />")
-              .replace(/\s/g, "&nbsp;");
-            logger.log(`グループのプロンプト: "${promptText}"`);
-          });
+      //   // プロンプトテキスト取得ボタンの設定
+      //   document
+      //     .getElementById("get-prompt-btn")
+      //     .addEventListener("click", function () {
+      //       const promptText = rootGroup.toObject();
+      //       console.log(JSON.stringify(promptText, null, 2));
+      //       const resultBox = document.getElementById("prompt-result");
+      //       resultBox.innerHTML = JSON.stringify(promptText, null, 2)
+      //         .replace(/$/g, "<br />")
+      //         .replace(/\s/g, "&nbsp;");
+      //       logger.log(`グループのプロンプト: "${promptText}"`);
+      //     });
 
-        // Containerコンポーネントの初期化
-        const containerTest = document.getElementById("container-test");
-        const container = document.createElement("prompt-kun-container");
+      //   // Containerコンポーネントの初期化
+      //   const containerTest = document.getElementById("container-test");
+      //   const container = document.createElement("prompt-kun-container");
 
-        // グループを追加
-        const group1 = container._addGroup("グループ1");
-        group1.getTexts()._addText("テキスト1");
+      //   // グループを追加
+      //   const group1 = container._addGroup("グループ1");
+      //   group1.getTexts()._addText("テキスト1");
 
-        const group2 = container._addGroup("グループ2");
-        group2.getTexts()._addText("テキスト2");
+      //   const group2 = container._addGroup("グループ2");
+      //   group2.getTexts()._addText("テキスト2");
 
-        // DOMに追加
-        containerTest.appendChild(container);
+      //   // DOMに追加
+      //   containerTest.appendChild(container);
 
-        // コンテナデータ取得ボタンの設定
-        document
-          .getElementById("get-container-btn")
-          .addEventListener("click", function () {
-            const containerData = container.toObject();
-            console.log(JSON.stringify(containerData, null, 2));
-            const resultBox = document.getElementById("container-result");
-            resultBox.innerHTML = JSON.stringify(containerData, null, 2)
-              .replace(/$/g, "<br />")
-              .replace(/\s/g, "&nbsp;");
-            logger.log(`コンテナデータ: "${JSON.stringify(containerData)}"`);
-          });
-      });
+      //   // コンテナデータ取得ボタンの設定
+      //   document
+      //     .getElementById("get-container-btn")
+      //     .addEventListener("click", function () {
+      //       const containerData = container.toObject();
+      //       console.log(JSON.stringify(containerData, null, 2));
+      //       const resultBox = document.getElementById("container-result");
+      //       resultBox.innerHTML = JSON.stringify(containerData, null, 2)
+      //         .replace(/$/g, "<br />")
+      //         .replace(/\s/g, "&nbsp;");
+      //       logger.log(`コンテナデータ: "${JSON.stringify(containerData)}"`);
+      //     });
+      // });
     </script>
   </body>
 </html>
