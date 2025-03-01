@@ -2,6 +2,8 @@ const containerIds = {
   root: "prompt-kun-container",
   form: "prompt-kun-form",
 };
+function toEachPrompt(obj) {}
+function toEachPromptRecur(obj, pos, neg) {}
 
 // 定数
 const NEGATIVE_PREFIX = "n!"; // Negativeプロンプトの接頭辞
@@ -19,7 +21,7 @@ class Logger {
   // ログの追加
   log(message) {
     // コンソールに出力
-
+    console.log(message);
     // ログ要素がある場合はそこにも追加
     if (this._logElement) {
       const entry = document.createElement("div");
@@ -78,7 +80,7 @@ class PromptKunText extends HTMLElement {
   }
 
   get text() {
-    return this._text;
+    return this._text.replace(/(\(|\))/g, "\\$1");
   }
 
   set text(value) {
@@ -372,9 +374,10 @@ class PromptKunText extends HTMLElement {
           align-items: center;
           width: auto;
           padding: 4px;
-          border: 1px solid #ccc;
+          border: 1px solid #333;
           border-radius: 4px;
-          background-color: ${isNegative ? "#ffcccc" : "#ccffcc"};
+          background-color: ${isNegative ? "#3a273a" : "#1a3a1a"};
+          color: #ddd;
           opacity: ${this._enabled ? "1" : "0.5"};
           cursor: pointer;
           user-select: none;
@@ -393,28 +396,34 @@ class PromptKunText extends HTMLElement {
           display: block;
       }
       
+      .drag-icon svg path {
+          fill: #ddd;
+      }
+      
       .text-input {
           flex: 1;
           min-width: 50px;
           padding: 2px;
           border-radius: 4px;
           border: none;
-          border-bottom: 1px solid #aaa;
+          border-bottom: 1px solid #555;
           outline: none;
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
-          text-decoration: ${!this._enabled ? "line-through" : ""}
+          text-decoration: ${!this._enabled ? "line-through" : ""};
+          background-color: transparent;
+          color: #ddd;
       }
       
       .text-input:focus {
-          border-bottom: 1px solid #666;
-          background-color: white;
+          border-bottom: 1px solid #888;
+          background-color: #1c2333;
       }
       
       .text-input:empty:before {
           content: attr(placeholder);
-          color: #999;
+          color: #777;
       }
       
       .factor-input {
@@ -422,6 +431,8 @@ class PromptKunText extends HTMLElement {
           outline: none;
           text-align: center;
           font-size: 0.9em;
+          color: #ddd;
+          background-color: transparent;
       }
 
       .factor-input:before {
@@ -429,12 +440,12 @@ class PromptKunText extends HTMLElement {
       }
       
       .factor-input:focus {
-          background-color: white;
+          background-color: #1c2333;
       }
       
       .factor-input:empty:before {
           content: ":" attr(placeholder);
-          color: #999;
+          color: #777;
       }
     `;
 
@@ -565,13 +576,13 @@ class PromptKunTexts extends HTMLElement {
         width: 32px;
         border: none;
         border-radius: 4px;
-        background-color: #4caf50;
+        background-color: #2a623a;
         color: white;
         cursor: pointer;
       }
       
       button:hover {
-        background-color: #45a049;
+        background-color: #3a7a4a;
       }
       
     `;
@@ -989,6 +1000,14 @@ class PromptKunGroup extends HTMLElement {
       } else {
         // アコーディオン開閉
         this._isOpen = !this._isOpen;
+        if (this._isOpen)
+          this.shadowRoot
+            .querySelector(".group-header")
+            .classList.remove("closed");
+        else
+          this.shadowRoot
+            .querySelector(".group-header")
+            .classList.add("closed");
         this.updateContentVisibility();
         logger.log(
           `グループ ${this._isOpen ? "展開" : "折りたたみ"}: ${this.name}`
@@ -1099,7 +1118,7 @@ class PromptKunGroup extends HTMLElement {
 
     // ヘッダーの背景色を更新
     if (header) {
-      header.style.backgroundColor = isNegative ? "#ffcccc" : "#e0e0e0";
+      header.style.backgroundColor = isNegative ? "#3a273a" : "#1c2333";
     }
 
     // スタイルの更新
@@ -1115,9 +1134,10 @@ class PromptKunGroup extends HTMLElement {
         display: flex;
         flex-direction: column;
         width: 100%;
-        border: 1px solid #ccc;
+        border: 1px solid #333;
         border-radius: 4px;
-        background-color: #f9f9f9;
+        background-color: #0B0F19;
+        color: #ddd;
         opacity: ${this._enabled ? "1" : "0.5"};
       }
       
@@ -1125,11 +1145,18 @@ class PromptKunGroup extends HTMLElement {
         display: flex;
         align-items: center;
         padding: 4px;
-        background-color: #e0e0e0;
-        border-bottom: 1px solid #ccc;
+        background-color: #1c2333;
+        border-bottom: 1px solid #333;
         border-radius: 4px 4px 0 0;
         cursor: pointer;
         position: relative;
+      }
+      .group-header:not(.closed):before {
+        content: "▼";
+      }
+      .group-header.closed:before {
+        content: "▼";
+        transform: rotate(-90deg);
       }
       
       .add-group-btn {
@@ -1150,25 +1177,31 @@ class PromptKunGroup extends HTMLElement {
         display: block;
       }
       
+      .drag-icon svg path {
+        fill: #ddd;
+      }
+      
       .name-input {
         min-width: 100px;
         padding: 4px;
         border-radius: 4px;
         border: none;
-        border-bottom: 1px solid #aaa;
+        border-bottom: 1px solid #555;
         outline: none;
         font-weight: bold;
+        color: #ddd;
+        background-color: transparent;
         text-decoration: ${!this._enabled ? "line-through" : ""}
       }
       
       .name-input:focus {
-        border-bottom: 1px solid #666;
-        background-color: white;
+        border-bottom: 1px solid #888;
+        background-color: #1c2333;
       }
       
       .name-input:empty:before {
         content: attr(placeholder);
-        color: #999;
+        color: #777;
       }
       
       .factor-input {
@@ -1177,6 +1210,8 @@ class PromptKunGroup extends HTMLElement {
         text-align: center;
         font-size: 0.9em;
         margin-left: 8px;
+        color: #ddd;
+        background-color: transparent;
       }
 
       .factor-input:before {
@@ -1184,12 +1219,12 @@ class PromptKunGroup extends HTMLElement {
       }
       
       .factor-input:focus {
-        background-color: white;
+        background-color: #1c2333;
       }
       
       .factor-input:empty:before {
         content: ":" attr(placeholder);
-        color: #999;
+        color: #777;
       }
       
       .group-content {
@@ -1215,14 +1250,14 @@ class PromptKunGroup extends HTMLElement {
         width: 32px;
         border: none;
         border-radius: 4px;
-        background-color: #4caf50;
+        background-color: #2a623a;
         color: white;
         cursor: pointer;
         font-size: 0.9em;
       }
       
       button:hover {
-        background-color: #45a049;
+        background-color: #3a7a4a;
       }
     `;
 
@@ -1423,13 +1458,13 @@ class PromptKunContainer extends HTMLElement {
         width: 32px;
         border: none;
         border-radius: 4px;
-        background-color: #4caf50;
+        background-color: #2a623a;
         color: white;
         cursor: pointer;
       }
       
       button:hover {
-        background-color: #45a049;
+        background-color: #3a7a4a;
       }
     `;
 
@@ -1556,10 +1591,8 @@ function initPromptKun(formRootId, logElementId = null) {
 
   // 変更イベントのリスナー
   container.addEventListener("change", () => {
-    const prompts = texts.generatePrompt();
-    logger.log(
-      `プロンプト生成: Positive="${prompts.positive}", Negative="${prompts.negative}"`
-    );
+    logger.log("コンテナが変更されました");
+    logger.log(container.toObject());
   });
 
   // DOMに追加
