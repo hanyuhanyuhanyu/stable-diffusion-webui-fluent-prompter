@@ -322,27 +322,6 @@ class PromptKunText extends HTMLElement {
       if (this.text.trim().length === 0) this.remove();
     });
 
-    // ホイールイベントでfactorの表示/非表示を切り替え
-    textInput.addEventListener("wheel", (e) => {
-      e.preventDefault();
-
-      if (this.factor === null) {
-        // factorが未表示の場合は表示する
-        this.factor = 1.0;
-      }
-      // factorが表示されている場合は値を増減する
-      const delta = e.deltaY < 0 ? 0.05 : -0.05;
-      this.factor = Math.max(0, this.factor + delta);
-
-      this.render();
-
-      this.dispatchEvent(
-        new CustomEvent("change", {
-          detail: { property: "factor", value: this.factor },
-        })
-      );
-    });
-
     // factor入力
     factorInput.addEventListener("keydown", (e) => {
       if (e.key.toLowerCase() === "enter") {
@@ -1063,27 +1042,6 @@ class PromptKunGroup extends HTMLElement {
       this.dispatchEvent(
         new CustomEvent("change", {
           detail: { property: "name", value: this._name },
-        })
-      );
-    });
-
-    // ホイールイベントでfactorの表示/非表示を切り替え
-    header.addEventListener("wheel", (e) => {
-      e.preventDefault();
-
-      if (this.factor === null) {
-        // factorが未表示の場合は表示する
-        this.factor = 1.0;
-      }
-      // factorが表示されている場合は値を増減する
-      const delta = e.deltaY < 0 ? 0.05 : -0.05;
-      this.factor = Math.max(0, this.factor + delta);
-
-      this.render();
-
-      this.dispatchEvent(
-        new CustomEvent("change", {
-          detail: { property: "factor", value: this.factor },
         })
       );
     });
