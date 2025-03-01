@@ -1101,7 +1101,7 @@ class PromptKunGroup extends HTMLElement {
         width: 100%;
         border: 1px solid #ccc;
         border-radius: 4px;
-        margin-bottom: 8px;
+        margin-bottom: 4px;
         background-color: #f9f9f9;
         opacity: ${this._enabled ? "1" : "0.5"};
       }
@@ -1109,7 +1109,7 @@ class PromptKunGroup extends HTMLElement {
       .group-header {
         display: flex;
         align-items: center;
-        padding: 8px;
+        padding: 4px;
         background-color: #e0e0e0;
         border-bottom: 1px solid #ccc;
         border-radius: 4px 4px 0 0;
@@ -1126,7 +1126,7 @@ class PromptKunGroup extends HTMLElement {
         display: flex;
         align-items: center;
         justify-content: center;
-        margin-right: 8px;
+        margin-right: 4px;
         padding: 2px;
         cursor: move;
       }
@@ -1136,7 +1136,6 @@ class PromptKunGroup extends HTMLElement {
       }
       
       .name-input {
-        flex: 1;
         min-width: 100px;
         padding: 4px;
         border-radius: 4px;
@@ -1179,27 +1178,27 @@ class PromptKunGroup extends HTMLElement {
       }
       
       .group-content {
-        padding: 8px;
+        padding: 4px;
       }
       
       .texts-container {
-        margin-bottom: 8px;
+        margin-bottom: 4px;
       }
       
       .groups-container {
         display: flex;
         flex-direction: column;
-        gap: 8px;
+        gap: 4px;
       }
       
       .controls {
         display: flex;
-        gap: 8px;
-        padding: 0 8px 8px;
+        gap: 4px;
+        padding: 4px;
       }
       
       button {
-        padding: 4px 8px;
+        padding: 4px;
         border: none;
         border-radius: 4px;
         background-color: #4caf50;
