@@ -98,7 +98,7 @@ class PromptKunText extends HTMLElement {
   }
   set factor(val) {
     if (isNaN(val)) this._factor = null;
-    if (val < 0) this._factor = 0;
+    else if (val < 0) this._factor = 0;
     else {
       const rounded = String(Math.round(val * 100));
       this._factor = Number(
@@ -709,7 +709,7 @@ function initPromptKun(formRootId, logElementId = null) {
   const texts = document.createElement("prompt-kun-texts");
 
   // 初期テキストを追加
-  texts.addInitialTexts(["美しい風景", "n!ぼやけた背景"]);
+  texts.addInitialTexts(["beautiful landscape", "n!simple background"]);
 
   // 変更イベントのリスナー
   texts.addEventListener("change", () => {
