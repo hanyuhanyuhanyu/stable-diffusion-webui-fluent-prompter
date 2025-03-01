@@ -5,7 +5,36 @@ const containerIds = {
 
 // 定数
 const NEGATIVE_PREFIX = "n!"; // Negativeプロンプトの接頭辞
-const UP_RIGHT_DOWN_LEFT_ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="16px" height="16px" viewBox="0 0 512 512"><path fill="#333" d="M278.6 9.4c-12.5-12.5-32.8-12.5-45.3 0l-64 64c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l9.4-9.4V224H109.3l9.4-9.4c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-64 64c-12.5 12.5-12.5 32.8 0 45.3l64 64c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3l-9.4-9.4l114.7.1v114.7l-9.4-9.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l64 64c12.5 12.5 32.8 12.5 45.3 0l64-64c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-9.4 9.4l.1-114.7h114.7l-9.4 9.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l64-64c12.5-12.5 12.5-32.8 0-45.3l-64-64c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l9.4 9.4L288 224V109.3l9.4 9.4c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3l-64-64z"/></svg>`;
+const UP_RIGHT_DOWN_LEFT_ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="16px" height="16px" viewBox="0 0 512 512"><path fill="#333" d="M278.6 9.4c-12.5-12.5-32.8-12.5-45.3 0l-64 64c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l9.4-9.4V224H109.3l9.4-9.4c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-64 64c-12.5 12.5-12.5 32.8 0 45.3l64 64c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3l-9.4-9.4l114.7.1v114.7l-9.4-9.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l64 64c12.5 12.5 32.8 12.5 45.3 0l64-64c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-9.4 9.4l.1-114.7h114.7l-9.4 9.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l64-64c12.5-12.5 12.5-32.8 0-45.3l-64-64c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l9.4 9.4L288 224V109.3l9.4 9.4c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.に3l-64-64z"/></svg>`;
+
+// ログ機能
+class Logger {
+  constructor(logElement = null) {
+    this._logElement = logElement;
+  }
+
+  // ログ要素の設定
+  setLogElement(element) {
+    this._logElement = element;
+  }
+
+  // ログの追加
+  log(message) {
+    // コンソールに出力
+    console.log(message);
+
+    // ログ要素がある場合はそこにも追加
+    if (this._logElement) {
+      const entry = document.createElement("div");
+      entry.className = "log-entry";
+      entry.textContent = `${new Date().toLocaleTimeString()}: ${message}`;
+      this._logElement.prepend(entry);
+    }
+  }
+}
+
+// グローバルロガーのインスタンス
+const logger = new Logger();
 
 // Textコンポーネントの実装
 class PromptKunText extends HTMLElement {
@@ -348,6 +377,8 @@ class PromptKunTexts extends HTMLElement {
       button:hover {
         background-color: #45a049;
       }
+      
+      
     `;
 
     // コンテナ
@@ -379,6 +410,7 @@ class PromptKunTexts extends HTMLElement {
       if (confirm("全てのテキスト要素を削除しますか？")) {
         textsContainer.innerHTML = "";
         this.dispatchEvent(new CustomEvent("change"));
+        logger.log("全てのテキスト要素を削除");
       }
     });
 
@@ -421,6 +453,7 @@ class PromptKunTexts extends HTMLElement {
       if (this._draggedElement && e.target === container) {
         container.appendChild(this._draggedElement);
         this.dispatchEvent(new CustomEvent("change"));
+        logger.log(`${this._draggedElement.text} を最後に移動`);
       }
     });
 
@@ -430,6 +463,7 @@ class PromptKunTexts extends HTMLElement {
       (e) => {
         if (e.target.tagName.toLowerCase() === "prompt-kun-text") {
           this._draggedElement = e.target;
+          logger.log(`ドラッグ開始: ${this._draggedElement.text}`);
         }
       },
       true
@@ -439,6 +473,7 @@ class PromptKunTexts extends HTMLElement {
     this.addEventListener(
       "dragend",
       () => {
+        logger.log("ドラッグ終了");
         this._draggedElement = null;
       },
       true
@@ -457,13 +492,15 @@ class PromptKunTexts extends HTMLElement {
     element.enabled = true;
 
     // イベントリスナー
-    element.addEventListener("change", () => {
+    element.addEventListener("change", (e) => {
       this.dispatchEvent(new CustomEvent("change"));
+      logger.log(`変更: ${e.detail.property} = ${e.detail.value}`);
     });
 
     element.addEventListener("delete", () => {
       element.remove();
       this.dispatchEvent(new CustomEvent("change"));
+      logger.log("テキスト削除");
     });
 
     // コンテナに追加
@@ -471,6 +508,9 @@ class PromptKunTexts extends HTMLElement {
     container.appendChild(element);
 
     this.dispatchEvent(new CustomEvent("change"));
+    logger.log(
+      `${isNegative ? "ネガティブ" : "ポジティブ"}テキスト追加: ${text}`
+    );
     return element;
   }
 
@@ -515,13 +555,19 @@ class PromptKunTexts extends HTMLElement {
       element.text = text;
       element.enabled = true;
 
-      element.addEventListener("change", () => {
+      element.addEventListener("change", (e) => {
         this.dispatchEvent(new CustomEvent("change"));
+        logger.log(
+          `変更: ${e.detail?.property || "text"} = ${
+            e.detail?.value || element.text
+          }`
+        );
       });
 
       element.addEventListener("delete", () => {
         element.remove();
         this.dispatchEvent(new CustomEvent("change"));
+        logger.log("テキスト削除");
       });
 
       container.appendChild(element);
@@ -533,19 +579,26 @@ class PromptKunTexts extends HTMLElement {
       element.text = `${NEGATIVE_PREFIX}${text}`;
       element.enabled = true;
 
-      element.addEventListener("change", () => {
+      element.addEventListener("change", (e) => {
         this.dispatchEvent(new CustomEvent("change"));
+        logger.log(
+          `変更: ${e.detail?.property || "text"} = ${
+            e.detail?.value || element.text
+          }`
+        );
       });
 
       element.addEventListener("delete", () => {
         element.remove();
         this.dispatchEvent(new CustomEvent("change"));
+        logger.log("テキスト削除");
       });
 
       container.appendChild(element);
     });
 
     this.dispatchEvent(new CustomEvent("change"));
+    logger.log("初期テキスト追加完了");
   }
 }
 
@@ -553,15 +606,17 @@ class PromptKunTexts extends HTMLElement {
 customElements.define("prompt-kun-text", PromptKunText);
 customElements.define("prompt-kun-texts", PromptKunTexts);
 
-onUiLoaded(function () {
-  const formRoot = document.getElementById(containerIds.form);
-  if (!formRoot) return;
+// 初期化関数
+function initPromptKun(formRootId, logElementId = null) {
+  const formRoot = document.getElementById(formRootId);
+  if (!formRoot) return null;
 
-  // Gradioのコンポーネントを配置
-  const toprow = document.getElementById("txt2img_toprow");
-  const container = document.getElementById(containerIds.root);
-  if (toprow && container) {
-    toprow.parentNode.insertBefore(container, toprow.nextSibling);
+  // ログ要素があれば設定
+  if (logElementId) {
+    const logElement = document.getElementById(logElementId);
+    if (logElement) {
+      logger.setLogElement(logElement);
+    }
   }
 
   // Textsコンポーネントを作成
@@ -576,25 +631,30 @@ onUiLoaded(function () {
   // 変更イベントのリスナー
   texts.addEventListener("change", () => {
     const prompts = texts.generatePrompt();
-    console.log("Prompts generated:", prompts);
+    logger.log(
+      `プロンプト生成: Positive="${prompts.positive}", Negative="${prompts.negative}"`
+    );
   });
 
-  // 使用方法の説明
-  const instructions = document.createElement("div");
-  instructions.innerHTML = `
-    <div style="margin: 10px 0; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
-      <h4 style="margin-top: 0;">使用方法</h4>
-      <ul>
-        <li>有効時に右クリック → 無効化</li>
-        <li>無効時に左クリック → 有効化</li>
-        <li>無効時に右クリック → 削除</li>
-        <li>テキストの先頭に「${NEGATIVE_PREFIX}」を付けるとネガティブプロンプトになります</li>
-        <li>左側のアイコンをドラッグして順番を入れ替えられます</li>
-      </ul>
-    </div>
-  `;
-
   // DOMに追加
-  formRoot.appendChild(instructions);
   formRoot.appendChild(texts);
+
+  logger.log("プロンプト君初期化完了");
+  return texts;
+}
+
+// Stable Diffusion Web UI用の初期化
+onUiLoaded(function () {
+  const formRoot = document.getElementById(containerIds.form);
+  if (!formRoot) return;
+
+  // Gradioのコンポーネントを配置
+  const toprow = document.getElementById("txt2img_toprow");
+  const container = document.getElementById(containerIds.root);
+  if (toprow && container) {
+    toprow.parentNode.insertBefore(container, toprow.nextSibling);
+  }
+
+  // プロンプト君を初期化
+  initPromptKun(containerIds.form);
 });
