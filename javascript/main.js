@@ -279,8 +279,279 @@ class PromptKunText extends HTMLElement {
   }
 }
 
+// Textsコンポーネントの実装（複数のTextをまとめる）
+class PromptKunTexts extends HTMLElement {
+  constructor() {
+    super();
+    this.attachShadow({ mode: "open" });
+
+    // ドラッグ中の要素
+    this._draggedElement = null;
+
+    this.render();
+  }
+
+  // 初期描画
+  connectedCallback() {
+    if (!this.shadowRoot.querySelector(".container")) {
+      this.render();
+    }
+  }
+
+  // UIの描画
+  render() {
+    // スタイル
+    const style = document.createElement("style");
+    style.textContent = `
+      :host {
+        display: block;
+        width: 100%;
+        font-family: sans-serif;
+      }
+      
+      .container {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+      }
+      
+      .texts-container {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        min-height: 50px;
+        padding: 10px;
+        border: 1px dashed #ccc;
+        border-radius: 4px;
+        margin-bottom: 10px;
+      }
+      
+      .texts-container.drag-over {
+        background-color: rgba(0, 0, 0, 0.05);
+      }
+      
+      .controls {
+        display: flex;
+        gap: 10px;
+        margin-top: 10px;
+      }
+      
+      button {
+        padding: 6px 12px;
+        border: none;
+        border-radius: 4px;
+        background-color: #4caf50;
+        color: white;
+        cursor: pointer;
+      }
+      
+      button:hover {
+        background-color: #45a049;
+      }
+    `;
+
+    // コンテナ
+    const container = document.createElement("div");
+    container.className = "container";
+
+    // テキスト要素を格納するコンテナ
+    const textsContainer = document.createElement("div");
+    textsContainer.className = "texts-container";
+
+    // 操作ボタンを格納するコンテナ
+    const controls = document.createElement("div");
+    controls.className = "controls";
+
+    // ポジティブテキスト追加ボタン
+    const addPositiveBtn = document.createElement("button");
+    addPositiveBtn.textContent = "ポジティブテキスト追加";
+    addPositiveBtn.addEventListener("click", () => this._addText());
+
+    // ネガティブテキスト追加ボタン
+    const addNegativeBtn = document.createElement("button");
+    addNegativeBtn.textContent = "ネガティブテキスト追加";
+    addNegativeBtn.addEventListener("click", () => this._addText(true));
+
+    // 全削除ボタン
+    const clearAllBtn = document.createElement("button");
+    clearAllBtn.textContent = "全て削除";
+    clearAllBtn.addEventListener("click", () => {
+      if (confirm("全てのテキスト要素を削除しますか？")) {
+        textsContainer.innerHTML = "";
+        this.dispatchEvent(new CustomEvent("change"));
+      }
+    });
+
+    // ボタンを追加
+    controls.appendChild(addPositiveBtn);
+    controls.appendChild(addNegativeBtn);
+    controls.appendChild(clearAllBtn);
+
+    // コンテナに追加
+    container.appendChild(textsContainer);
+    container.appendChild(controls);
+
+    // Shadow DOMに追加
+    this.shadowRoot.innerHTML = "";
+    this.shadowRoot.appendChild(style);
+    this.shadowRoot.appendChild(container);
+
+    // ドラッグ&ドロップの設定
+    this._setupDragAndDrop(textsContainer);
+  }
+
+  // ドラッグ&ドロップの設定
+  _setupDragAndDrop(container) {
+    // コンテナのドラッグオーバー
+    container.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      container.classList.add("drag-over");
+    });
+
+    // コンテナからドラッグ離脱
+    container.addEventListener("dragleave", () => {
+      container.classList.remove("drag-over");
+    });
+
+    // コンテナにドロップ
+    container.addEventListener("drop", (e) => {
+      e.preventDefault();
+      container.classList.remove("drag-over");
+
+      if (this._draggedElement && e.target === container) {
+        container.appendChild(this._draggedElement);
+        this.dispatchEvent(new CustomEvent("change"));
+      }
+    });
+
+    // 要素のドラッグ開始
+    this.addEventListener(
+      "dragstart",
+      (e) => {
+        if (e.target.tagName.toLowerCase() === "prompt-kun-text") {
+          this._draggedElement = e.target;
+        }
+      },
+      true
+    );
+
+    // 要素のドラッグ終了
+    this.addEventListener(
+      "dragend",
+      () => {
+        this._draggedElement = null;
+      },
+      true
+    );
+  }
+
+  // テキスト要素の追加
+  _addText(isNegative = false) {
+    const text = prompt(
+      `${isNegative ? "ネガティブ" : "ポジティブ"}プロンプトを入力してください:`
+    );
+    if (!text) return;
+
+    const element = document.createElement("prompt-kun-text");
+    element.text = isNegative ? `${NEGATIVE_PREFIX}${text}` : text;
+    element.enabled = true;
+
+    // イベントリスナー
+    element.addEventListener("change", () => {
+      this.dispatchEvent(new CustomEvent("change"));
+    });
+
+    element.addEventListener("delete", () => {
+      element.remove();
+      this.dispatchEvent(new CustomEvent("change"));
+    });
+
+    // コンテナに追加
+    const container = this.shadowRoot.querySelector(".texts-container");
+    container.appendChild(element);
+
+    this.dispatchEvent(new CustomEvent("change"));
+    return element;
+  }
+
+  // 全てのテキスト要素を取得
+  getAllTexts() {
+    const container = this.shadowRoot.querySelector(".texts-container");
+    return Array.from(container.querySelectorAll("prompt-kun-text"));
+  }
+
+  // プロンプト文字列の生成
+  generatePrompt() {
+    const texts = this.getAllTexts();
+    const positivePrompts = [];
+    const negativePrompts = [];
+
+    texts.forEach((text) => {
+      if (!text.enabled) return;
+
+      if (text.isNegative()) {
+        negativePrompts.push(text.getPromptText());
+      } else {
+        positivePrompts.push(text.text);
+      }
+    });
+
+    return {
+      positive: positivePrompts.join(", "),
+      negative: negativePrompts.join(", "),
+    };
+  }
+
+  // 初期テキストの追加
+  addInitialTexts(positiveTexts = [], negativeTexts = []) {
+    const container = this.shadowRoot.querySelector(".texts-container");
+
+    // 既存の要素をクリア
+    container.innerHTML = "";
+
+    // ポジティブテキストの追加
+    positiveTexts.forEach((text) => {
+      const element = document.createElement("prompt-kun-text");
+      element.text = text;
+      element.enabled = true;
+
+      element.addEventListener("change", () => {
+        this.dispatchEvent(new CustomEvent("change"));
+      });
+
+      element.addEventListener("delete", () => {
+        element.remove();
+        this.dispatchEvent(new CustomEvent("change"));
+      });
+
+      container.appendChild(element);
+    });
+
+    // ネガティブテキストの追加
+    negativeTexts.forEach((text) => {
+      const element = document.createElement("prompt-kun-text");
+      element.text = `${NEGATIVE_PREFIX}${text}`;
+      element.enabled = true;
+
+      element.addEventListener("change", () => {
+        this.dispatchEvent(new CustomEvent("change"));
+      });
+
+      element.addEventListener("delete", () => {
+        element.remove();
+        this.dispatchEvent(new CustomEvent("change"));
+      });
+
+      container.appendChild(element);
+    });
+
+    this.dispatchEvent(new CustomEvent("change"));
+  }
+}
+
 // カスタム要素の登録
 customElements.define("prompt-kun-text", PromptKunText);
+customElements.define("prompt-kun-texts", PromptKunTexts);
 
 onUiLoaded(function () {
   const formRoot = document.getElementById(containerIds.form);
@@ -293,25 +564,19 @@ onUiLoaded(function () {
     toprow.parentNode.insertBefore(container, toprow.nextSibling);
   }
 
-  // テスト用のTextコンポーネントを追加
-  const testPositive = document.createElement("prompt-kun-text");
-  testPositive.text = "サンプルプロンプト";
-  testPositive.enabled = true;
+  // Textsコンポーネントを作成
+  const texts = document.createElement("prompt-kun-texts");
 
-  const testNegative = document.createElement("prompt-kun-text");
-  testNegative.text = "n!サンプルネガティブプロンプト";
-  testNegative.enabled = true;
+  // 初期テキストを追加
+  texts.addInitialTexts(
+    ["美しい風景"], // ポジティブプロンプト
+    ["ぼやけた背景"] // ネガティブプロンプト
+  );
 
-  // イベントリスナーの設定
-  [testPositive, testNegative].forEach((element) => {
-    element.addEventListener("change", (e) => {
-      console.log("Text changed:", e.detail);
-    });
-
-    element.addEventListener("delete", () => {
-      element.remove();
-      console.log("Text deleted");
-    });
+  // 変更イベントのリスナー
+  texts.addEventListener("change", () => {
+    const prompts = texts.generatePrompt();
+    console.log("Prompts generated:", prompts);
   });
 
   // 使用方法の説明
@@ -324,12 +589,12 @@ onUiLoaded(function () {
         <li>無効時に左クリック → 有効化</li>
         <li>無効時に右クリック → 削除</li>
         <li>テキストの先頭に「${NEGATIVE_PREFIX}」を付けるとネガティブプロンプトになります</li>
+        <li>左側のアイコンをドラッグして順番を入れ替えられます</li>
       </ul>
     </div>
   `;
 
   // DOMに追加
   formRoot.appendChild(instructions);
-  formRoot.appendChild(testPositive);
-  formRoot.appendChild(testNegative);
+  formRoot.appendChild(texts);
 });
