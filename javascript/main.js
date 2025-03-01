@@ -260,6 +260,7 @@ class PromptKunText extends HTMLElement {
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
+          text-decoration: ${!this._enabled ? "line-through" : ""}
       }
       
       .text-input:focus {
@@ -338,6 +339,7 @@ class PromptKunTexts extends HTMLElement {
       .container {
         display: flex;
         flex-direction: column;
+        row-gap: 4px;
         width: 100%;
       }
       
@@ -594,5 +596,5 @@ onUiLoaded(function () {
   }
 
   // プロンプト君を初期化
-  initPromptKun(containerIds.form);
+  initPromptKun(containerIds.form, "log");
 });
