@@ -97,14 +97,16 @@ class PromptKunText extends HTMLElement {
     return this._factor;
   }
   set factor(val) {
-    if (isNaN(val)) {
-      this._factor = null;
-      return;
+    if (isNaN(val)) this._factor = null;
+    if (val < 0) this._factor = 0;
+    else {
+      const rounded = String(Math.round(val * 100));
+      this._factor = Number(
+        `${rounded.slice(0, rounded.length - 2) || "0"}.${(
+          "00" + rounded
+        ).slice(-2)}`
+      );
     }
-    const rounded = String(Math.round(val * 100));
-    this._factor = Number(
-      `${rounded.slice(0, rounded.length - 2) || "0"}.${rounded.slice(-2)}`
-    );
   }
 
   // テキストがネガティブかどうかを判定
