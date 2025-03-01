@@ -83,105 +83,20 @@
     <div class="container">
       <h1>Prompt-kun Component Test</h1>
 
+      <div class="prompt">
+        <div id="txt2img_prompt"><textarea></textarea></div>
+        <div id="txt2img_neg_prompt"><textarea></textarea></div>
+      </div>
+
       <div class="test-area">
         <h2>Texts Component</h2>
         <div id="prompt-kun-form" class="component-test"></div>
       </div>
-
-      <div class="test-area">
-        <h2>Group Component</h2>
-        <div id="group-test" class="component-test"></div>
-        <div class="controls">
-          <button id="get-prompt-btn">Get Prompt Text</button>
-          <div id="prompt-result" class="result-box"></div>
-        </div>
-      </div>
-
-      <div class="test-area">
-        <h2>Container Component</h2>
-        <div id="container-test" class="component-test"></div>
-        <div class="controls">
-          <button id="get-container-btn">Get Container Data</button>
-          <div id="container-result" class="result-box"></div>
-        </div>
-      </div>
-
       <h2>イベントログ</h2>
       <div id="log"></div>
     </div>
 
     <!-- コンポーネントのJavaScriptを読み込み -->
     <script src="./javascript/main.js"></script>
-
-    <script type="text/javascript">
-      // DOMが読み込まれたら実行
-      // document.addEventListener("DOMContentLoaded", function () {
-      //   // Textsコンポーネントの初期化
-      //   // initPromptKun("prompt-kun-form", "log");
-
-      //   // Groupコンポーネントの初期化
-      //   const groupTest = document.getElementById("group-test");
-      //   const rootGroup = document.createElement("prompt-kun-group");
-      //   rootGroup.name = "ルートグループ";
-
-      //   // Textsにテキストを追加
-      //   const texts = rootGroup.getTexts();
-      //   texts._addText("メインテキスト");
-
-      //   // サブグループを追加
-      //   const subGroup1 = rootGroup._addGroup("サブグループ1");
-      //   subGroup1.getTexts()._addText("サブテキスト1");
-
-      //   const subGroup2 = rootGroup._addGroup("サブグループ2");
-      //   subGroup2.getTexts()._addText("サブテキスト2");
-
-      //   // ネストされたグループを追加
-      //   const nestedGroup = subGroup1._addGroup("ネストグループ");
-      //   nestedGroup.getTexts()._addText("ネストテキスト");
-
-      //   // DOMに追加
-      //   groupTest.appendChild(rootGroup);
-
-      //   // プロンプトテキスト取得ボタンの設定
-      //   document
-      //     .getElementById("get-prompt-btn")
-      //     .addEventListener("click", function () {
-      //       const promptText = rootGroup.toObject();
-      //       console.log(JSON.stringify(promptText, null, 2));
-      //       const resultBox = document.getElementById("prompt-result");
-      //       resultBox.innerHTML = JSON.stringify(promptText, null, 2)
-      //         .replace(/$/g, "<br />")
-      //         .replace(/\s/g, "&nbsp;");
-      //       logger.log(`グループのプロンプト: "${promptText}"`);
-      //     });
-
-      //   // Containerコンポーネントの初期化
-      //   const containerTest = document.getElementById("container-test");
-      //   const container = document.createElement("prompt-kun-container");
-
-      //   // グループを追加
-      //   const group1 = container._addGroup("グループ1");
-      //   group1.getTexts()._addText("テキスト1");
-
-      //   const group2 = container._addGroup("グループ2");
-      //   group2.getTexts()._addText("テキスト2");
-
-      //   // DOMに追加
-      //   containerTest.appendChild(container);
-
-      //   // コンテナデータ取得ボタンの設定
-      //   document
-      //     .getElementById("get-container-btn")
-      //     .addEventListener("click", function () {
-      //       const containerData = container.toObject();
-      //       console.log(JSON.stringify(containerData, null, 2));
-      //       const resultBox = document.getElementById("container-result");
-      //       resultBox.innerHTML = JSON.stringify(containerData, null, 2)
-      //         .replace(/$/g, "<br />")
-      //         .replace(/\s/g, "&nbsp;");
-      //       logger.log(`コンテナデータ: "${JSON.stringify(containerData)}"`);
-      //     });
-      // });
-    </script>
   </body>
 </html>

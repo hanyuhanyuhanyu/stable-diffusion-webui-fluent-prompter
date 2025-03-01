@@ -581,31 +581,6 @@ class PromptKunTexts extends HTMLElement {
         width: 100%;
         min-height: 36px;
       }
-      
-      
-      .controls {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-      }
-      
-      button {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        height: 32px;
-        width: 32px;
-        border: none;
-        border-radius: 4px;
-        background-color: #2a623a;
-        color: white;
-        cursor: pointer;
-      }
-      
-      button:hover {
-        background-color: #3a7a4a;
-      }
-      
     `;
 
     // コンテナ
@@ -616,25 +591,10 @@ class PromptKunTexts extends HTMLElement {
     const textsContainer = document.createElement("div");
     textsContainer.className = "texts-container";
 
-    // 操作ボタンを格納するコンテナ
-    const controls = document.createElement("div");
-    controls.className = "controls";
-
-    // ポジティブテキスト追加ボタン
-    const addPositiveBtn = document.createElement("button");
-    addPositiveBtn.innerHTML = `
-<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12">
-	<path fill="#f7efef" d="M6.5 1.75a.75.75 0 0 0-1.5 0V5H1.75a.75.75 0 0 0 0 1.5H5v3.25a.75.75 0 0 0 1.5 0V6.5h3.25a.75.75 0 0 0 0-1.5H6.5z" />
-</svg>
-    `;
-    addPositiveBtn.addEventListener("click", () => this._addText());
-
-    // ボタンを追加
-    controls.appendChild(addPositiveBtn);
+    textsContainer.addEventListener("click", () => this._addText());
 
     // コンテナに追加
     container.appendChild(textsContainer);
-    container.appendChild(controls);
 
     // Shadow DOMに追加
     this.shadowRoot.innerHTML = "";
@@ -1161,6 +1121,8 @@ class PromptKunGroup extends HTMLElement {
         width: 100%;
         font-family: sans-serif;
         margin-top: 4px;
+        box-sizing: border-box;
+        padding: 0 8px;
       }
       
       .container {
@@ -1347,7 +1309,7 @@ class PromptKunGroup extends HTMLElement {
 
     this.dispatchEvent(new CustomEvent("change"));
     logger.log(`グループ追加: ${name}`);
-
+    element.shadowRoot.querySelector(".name-input").focus();
     return element;
   }
 
