@@ -222,7 +222,6 @@ class PromptKunText extends HTMLElement {
       :host {
           display: inline-block;
           width: auto;
-          margin: 5px 0;
           font-family: sans-serif;
       }
       
@@ -346,7 +345,10 @@ class PromptKunTexts extends HTMLElement {
       
       .texts-container {
         display: flex;
-        flex-direction: column;
+        flex-direction: row;
+        gap: 4px;
+        flex-wrap: wrap;
+        box-sizing: border-box;
         width: 100%;
         min-height: 50px;
         padding: 10px;
@@ -377,7 +379,6 @@ class PromptKunTexts extends HTMLElement {
       button:hover {
         background-color: #45a049;
       }
-      
       
     `;
 
