@@ -1351,10 +1351,198 @@ class PromptKunGroup extends HTMLElement {
   }
 }
 
+// PromptKunContainerコンポーネントの実装（Groupを束ねるだけのルートコンテナ）
+class PromptKunContainer extends HTMLElement {
+  constructor() {
+    super();
+    this.attachShadow({ mode: "open" });
+
+    // ドラッグ中の要素
+    this._draggedElement = null;
+
+    this.render();
+  }
+
+  // 要素を指定した要素の前に挿入
+  insertBefore(element, referenceElement) {
+    const container = this.shadowRoot.querySelector(".groups-container");
+    container.insertBefore(element, referenceElement);
+  }
+
+  // 要素を指定した要素の後に挿入
+  insertAfter(element, referenceElement) {
+    const container = this.shadowRoot.querySelector(".groups-container");
+    if (referenceElement.nextSibling) {
+      container.insertBefore(element, referenceElement.nextSibling);
+    } else {
+      container.appendChild(element);
+    }
+  }
+
+  // 初回描画
+  connectedCallback() {
+    if (!this.shadowRoot.querySelector(".container")) {
+      this.render();
+    }
+  }
+
+  // UIの描画
+  render() {
+    // スタイル
+    const style = document.createElement("style");
+    style.textContent = `
+      :host {
+        display: block;
+        width: 100%;
+        font-family: sans-serif;
+      }
+      
+      .container {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        background-color: #f9f9f9;
+        padding: 8px;
+      }
+      
+      .groups-container {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      
+      .controls {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 8px;
+      }
+      
+      button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 32px;
+        width: 32px;
+        border: none;
+        border-radius: 4px;
+        background-color: #4caf50;
+        color: white;
+        cursor: pointer;
+      }
+      
+      button:hover {
+        background-color: #45a049;
+      }
+    `;
+
+    // コンテナ
+    const container = document.createElement("div");
+    container.className = "container";
+
+    // グループ要素を格納するコンテナ
+    const groupsContainer = document.createElement("div");
+    groupsContainer.className = "groups-container";
+
+    // 操作ボタンを格納するコンテナ
+    const controls = document.createElement("div");
+    controls.className = "controls";
+
+    // グループ追加ボタン
+    const addGroupBtn = document.createElement("button");
+    addGroupBtn.innerHTML = `
+<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12">
+	<path fill="#f7efef" d="M6.5 1.75a.75.75 0 0 0-1.5 0V5H1.75a.75.75 0 0 0 0 1.5H5v3.25a.75.75 0 0 0 1.5 0V6.5h3.25a.75.75 0 0 0 0-1.5H6.5z" />
+</svg>
+    `;
+    addGroupBtn.addEventListener("click", () => this._addGroup());
+
+    // ボタンを追加
+    controls.appendChild(addGroupBtn);
+
+    // コンテナに追加
+    container.appendChild(groupsContainer);
+    container.appendChild(controls);
+
+    // Shadow DOMに追加
+    this.shadowRoot.innerHTML = "";
+    this.shadowRoot.appendChild(style);
+    this.shadowRoot.appendChild(container);
+  }
+
+  // グループ要素の追加
+  _addGroup(name = "Group") {
+    const element = document.createElement("prompt-kun-group");
+    element.enabled = true;
+    element.name = name;
+    element.parent = this;
+
+    // イベントリスナー
+    element.addEventListener("change", (e) => {
+      this.dispatchEvent(new CustomEvent("change"));
+      if (e.detail) {
+        logger.log(`グループ変更: ${e.detail.property} = ${e.detail.value}`);
+      }
+    });
+
+    element.addEventListener("delete", () => {
+      element.remove();
+      this.dispatchEvent(new CustomEvent("change"));
+      logger.log("グループ削除");
+    });
+
+    // コンテナに追加
+    const container = this.shadowRoot.querySelector(".groups-container");
+    container.appendChild(element);
+
+    this.dispatchEvent(new CustomEvent("change"));
+    logger.log(`グループ追加: ${name}`);
+
+    return element;
+  }
+
+  // 全てのグループ要素を取得
+  getAllGroups() {
+    const container = this.shadowRoot.querySelector(".groups-container");
+    return Array.from(container.querySelectorAll("prompt-kun-group"));
+  }
+
+  // 現在の状態をオブジェクトとして取得
+  getData() {
+    const groupsData = this.getAllGroups().map((group) => group.getData());
+
+    return {
+      groups: groupsData,
+    };
+  }
+
+  // オブジェクトから状態を設定
+  setData(data) {
+    // グループの設定
+    if (data.groups && Array.isArray(data.groups)) {
+      // 既存のグループをクリア
+      this.getAllGroups().forEach((group) => group.remove());
+      // 新しいグループを追加
+      data.groups.forEach((groupData) => {
+        const group = this._addGroup(groupData.name);
+        group.setData(groupData);
+      });
+    }
+  }
+
+  toObject() {
+    return {
+      groups: this.getAllGroups().map((g) => g.toObject()),
+    };
+  }
+}
+
 // カスタム要素の登録
 customElements.define("prompt-kun-text", PromptKunText);
 customElements.define("prompt-kun-texts", PromptKunTexts);
 customElements.define("prompt-kun-group", PromptKunGroup);
+customElements.define("prompt-kun-container", PromptKunContainer);
 
 // 初期化関数
 function initPromptKun(formRootId, logElementId = null) {

@@ -97,6 +97,15 @@
         </div>
       </div>
 
+      <div class="test-area">
+        <h2>Container Component</h2>
+        <div id="container-test" class="component-test"></div>
+        <div class="controls">
+          <button id="get-container-btn">Get Container Data</button>
+          <div id="container-result" class="result-box"></div>
+        </div>
+      </div>
+
       <h2>イベントログ</h2>
       <div id="log"></div>
     </div>
@@ -141,10 +150,36 @@
             console.log(JSON.stringify(promptText, null, 2));
             const resultBox = document.getElementById("prompt-result");
             resultBox.innerHTML = JSON.stringify(promptText, null, 2)
-
               .replace(/$/g, "<br />")
               .replace(/\s/g, "&nbsp;");
             logger.log(`グループのプロンプト: "${promptText}"`);
+          });
+
+        // Containerコンポーネントの初期化
+        const containerTest = document.getElementById("container-test");
+        const container = document.createElement("prompt-kun-container");
+
+        // グループを追加
+        const group1 = container._addGroup("グループ1");
+        group1.getTexts()._addText("テキスト1");
+
+        const group2 = container._addGroup("グループ2");
+        group2.getTexts()._addText("テキスト2");
+
+        // DOMに追加
+        containerTest.appendChild(container);
+
+        // コンテナデータ取得ボタンの設定
+        document
+          .getElementById("get-container-btn")
+          .addEventListener("click", function () {
+            const containerData = container.toObject();
+            console.log(JSON.stringify(containerData, null, 2));
+            const resultBox = document.getElementById("container-result");
+            resultBox.innerHTML = JSON.stringify(containerData, null, 2)
+              .replace(/$/g, "<br />")
+              .replace(/\s/g, "&nbsp;");
+            logger.log(`コンテナデータ: "${JSON.stringify(containerData)}"`);
           });
       });
     </script>
