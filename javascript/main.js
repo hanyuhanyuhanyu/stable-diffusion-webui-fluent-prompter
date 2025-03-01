@@ -5,8 +5,6 @@ const containerIds = {
 
 // 定数
 const NEGATIVE_PREFIX = "n!"; // Negativeプロンプトの接頭辞
-const UP_RIGHT_DOWN_LEFT_ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="16px" height="16px" viewBox="0 0 512 512"><path fill="#333" d="M278.6 9.4c-12.5-12.5-32.8-12.5-45.3 0l-64 64c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l9.4-9.4V224H109.3l9.4-9.4c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-64 64c-12.5 12.5-12.5 32.8 0 45.3l64 64c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3l-9.4-9.4l114.7.1v114.7l-9.4-9.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l64 64c12.5 12.5 32.8 12.5 45.3 0l64-64c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-9.4 9.4l.1-114.7h114.7l-9.4 9.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l64-64c12.5-12.5 12.5-32.8 0-45.3l-64-64c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l9.4 9.4L288 224V109.3l9.4 9.4c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.に3l-64-64z"/></svg>`;
-
 // ログ機能
 class Logger {
   constructor(logElement = null) {
@@ -118,7 +116,7 @@ class PromptKunText extends HTMLElement {
     // アイコン要素の作成（ドラッグハンドルとして機能）
     const iconDiv = document.createElement("div");
     iconDiv.className = "drag-icon";
-    iconDiv.innerHTML = UP_RIGHT_DOWN_LEFT_ICON_SVG;
+    iconDiv.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16px" height="16px" viewBox="0 0 512 512"><path fill="#333" d="M278.6 9.4c-12.5-12.5-32.8-12.5-45.3 0l-64 64c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l9.4-9.4V224H109.3l9.4-9.4c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-64 64c-12.5 12.5-12.5 32.8 0 45.3l64 64c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3l-9.4-9.4l114.7.1v114.7l-9.4-9.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l64 64c12.5 12.5 32.8 12.5 45.3 0l64-64c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-9.4 9.4l.1-114.7h114.7l-9.4 9.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l64-64c12.5-12.5 12.5-32.8 0-45.3l-64-64c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l9.4 9.4L288 224V109.3l9.4 9.4c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.に3l-64-64z"/></svg>`;
 
     // ドラッグハンドルのイベント
     iconDiv.addEventListener("mousedown", (e) => {
@@ -350,11 +348,7 @@ class PromptKunTexts extends HTMLElement {
         flex-wrap: wrap;
         box-sizing: border-box;
         width: 100%;
-        min-height: 50px;
-        padding: 10px;
-        border: 1px dashed #ccc;
-        border-radius: 4px;
-        margin-bottom: 10px;
+        min-height: 36px;
       }
       
       .texts-container.drag-over {
@@ -364,7 +358,6 @@ class PromptKunTexts extends HTMLElement {
       .controls {
         display: flex;
         gap: 10px;
-        margin-top: 10px;
       }
       
       button {
@@ -396,29 +389,11 @@ class PromptKunTexts extends HTMLElement {
 
     // ポジティブテキスト追加ボタン
     const addPositiveBtn = document.createElement("button");
-    addPositiveBtn.textContent = "ポジティブテキスト追加";
+    addPositiveBtn.textContent = "add text";
     addPositiveBtn.addEventListener("click", () => this._addText());
-
-    // ネガティブテキスト追加ボタン
-    const addNegativeBtn = document.createElement("button");
-    addNegativeBtn.textContent = "ネガティブテキスト追加";
-    addNegativeBtn.addEventListener("click", () => this._addText(true));
-
-    // 全削除ボタン
-    const clearAllBtn = document.createElement("button");
-    clearAllBtn.textContent = "全て削除";
-    clearAllBtn.addEventListener("click", () => {
-      if (confirm("全てのテキスト要素を削除しますか？")) {
-        textsContainer.innerHTML = "";
-        this.dispatchEvent(new CustomEvent("change"));
-        logger.log("全てのテキスト要素を削除");
-      }
-    });
 
     // ボタンを追加
     controls.appendChild(addPositiveBtn);
-    controls.appendChild(addNegativeBtn);
-    controls.appendChild(clearAllBtn);
 
     // コンテナに追加
     container.appendChild(textsContainer);
@@ -482,15 +457,10 @@ class PromptKunTexts extends HTMLElement {
   }
 
   // テキスト要素の追加
-  _addText(isNegative = false) {
-    const text = prompt(
-      `${isNegative ? "ネガティブ" : "ポジティブ"}プロンプトを入力してください:`
-    );
-    if (!text) return;
-
+  _addText(text = "") {
     const element = document.createElement("prompt-kun-text");
-    element.text = isNegative ? `${NEGATIVE_PREFIX}${text}` : text;
     element.enabled = true;
+    const input = element.shadowRoot.querySelector(".text-input");
 
     // イベントリスナー
     element.addEventListener("change", (e) => {
@@ -503,15 +473,39 @@ class PromptKunTexts extends HTMLElement {
       this.dispatchEvent(new CustomEvent("change"));
       logger.log("テキスト削除");
     });
+    input.addEventListener("keydown", (e) => {
+      switch (e.key.toLowerCase()) {
+        case "backspace": {
+          if (input.textContent.length > 0) break;
+          const prev = element.previousSibling;
+          element.remove();
+          if (prev) prev.shadowRoot.querySelector(".text-input")?.focus();
+          break;
+        }
+        case "enter": {
+          e.preventDefault();
+          input.blur();
+          if (input.textContent.trim().length === 0) element.remove();
+          else this._addText();
+          break;
+        }
+        case "escape": {
+          input.blur();
+          if (input.textContent.trim().length === 0) element.remove();
+          break;
+        }
+      }
+    });
 
     // コンテナに追加
     const container = this.shadowRoot.querySelector(".texts-container");
     container.appendChild(element);
 
     this.dispatchEvent(new CustomEvent("change"));
-    logger.log(
-      `${isNegative ? "ネガティブ" : "ポジティブ"}テキスト追加: ${text}`
-    );
+
+    if (text) element.text = text;
+    else input.focus();
+
     return element;
   }
 
@@ -544,62 +538,8 @@ class PromptKunTexts extends HTMLElement {
   }
 
   // 初期テキストの追加
-  addInitialTexts(positiveTexts = [], negativeTexts = []) {
-    const container = this.shadowRoot.querySelector(".texts-container");
-
-    // 既存の要素をクリア
-    container.innerHTML = "";
-
-    // ポジティブテキストの追加
-    positiveTexts.forEach((text) => {
-      const element = document.createElement("prompt-kun-text");
-      element.text = text;
-      element.enabled = true;
-
-      element.addEventListener("change", (e) => {
-        this.dispatchEvent(new CustomEvent("change"));
-        logger.log(
-          `変更: ${e.detail?.property || "text"} = ${
-            e.detail?.value || element.text
-          }`
-        );
-      });
-
-      element.addEventListener("delete", () => {
-        element.remove();
-        this.dispatchEvent(new CustomEvent("change"));
-        logger.log("テキスト削除");
-      });
-
-      container.appendChild(element);
-    });
-
-    // ネガティブテキストの追加
-    negativeTexts.forEach((text) => {
-      const element = document.createElement("prompt-kun-text");
-      element.text = `${NEGATIVE_PREFIX}${text}`;
-      element.enabled = true;
-
-      element.addEventListener("change", (e) => {
-        this.dispatchEvent(new CustomEvent("change"));
-        logger.log(
-          `変更: ${e.detail?.property || "text"} = ${
-            e.detail?.value || element.text
-          }`
-        );
-      });
-
-      element.addEventListener("delete", () => {
-        element.remove();
-        this.dispatchEvent(new CustomEvent("change"));
-        logger.log("テキスト削除");
-      });
-
-      container.appendChild(element);
-    });
-
-    this.dispatchEvent(new CustomEvent("change"));
-    logger.log("初期テキスト追加完了");
+  addInitialTexts(texts = []) {
+    texts.forEach((t) => this._addText(t));
   }
 }
 
@@ -624,10 +564,7 @@ function initPromptKun(formRootId, logElementId = null) {
   const texts = document.createElement("prompt-kun-texts");
 
   // 初期テキストを追加
-  texts.addInitialTexts(
-    ["美しい風景"], // ポジティブプロンプト
-    ["ぼやけた背景"] // ネガティブプロンプト
-  );
+  texts.addInitialTexts(["美しい風景", "n!ぼやけた背景"]);
 
   // 変更イベントのリスナー
   texts.addEventListener("change", () => {
