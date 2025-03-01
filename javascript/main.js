@@ -509,6 +509,7 @@ class PromptKunText extends HTMLElement {
         };
         if (!this.enabled) return prompt;
         let text = this.text;
+        if (this.text.length === 0) return prompt;
         let factor = this.factor;
         if (!this.factor) factor = option.factor;
         if (factor === 1) factor = null;
@@ -1687,26 +1688,36 @@ function initPromptKun(formRootId, logElementId = null) {
   }
   const container = document.createElement("prompt-kun-container");
 
+  const setVal = (id, value) => {
+    const element = gradioApp().querySelector(`#${id} textarea`);
+    console.log(element, value);
+    if (!element) return;
+    element.value = value;
+    let e = new Event("input", { bubbles: true });
+    Object.defineProperty(e, "target", { value: element });
+    element.dispatchEvent(e);
+  };
   const onChange = () => {
     logger.log("コンテナが変更されました");
     const obj = container.toObject();
     const { positive, negative } = toEachPrompt(obj);
     try {
       localStorage.setItem(PROMPT_STORAGE_KEY, JSON.stringify(obj));
-      document.querySelector("#txt2img_prompt textarea").value = positive
-        .filter((a) => a.trim().length > 0)
-        .join(",");
-      document.querySelector("#txt2img_neg_prompt textarea").value = negative
-        .filter((a) => a.trim().length > 0)
-        .join(",");
+      setVal(
+        "txt2img_prompt",
+        positive.filter((a) => a.trim().length > 0).join(", ")
+      );
+      setVal(
+        "txt2img_neg_prompt",
+        negative.filter((a) => a.trim().length > 0).join(", ")
+      );
     } catch (e) {
       console.error(e);
     }
   };
-  container.fromObject(JSON.parse(localStorage.getItem(PROMPT_STORAGE_KEY)));
-  onChange();
   // 変更イベントのリスナー
   container.addEventListener("change", onChange);
+  container.fromObject(JSON.parse(localStorage.getItem(PROMPT_STORAGE_KEY)));
 
   // DOMに追加
   formRoot.appendChild(container);
