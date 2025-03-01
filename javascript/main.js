@@ -534,13 +534,14 @@ class PromptKunTexts extends HTMLElement {
       
       .container {
         display: flex;
-        flex-direction: column;
+        flex-direction: row;
         row-gap: 4px;
         width: 100%;
       }
       
       .texts-container {
         display: flex;
+        flex-grow: 1;
         flex-direction: row;
         gap: 4px;
         flex-wrap: wrap;
@@ -552,11 +553,16 @@ class PromptKunTexts extends HTMLElement {
       
       .controls {
         display: flex;
+        align-items: center;
         gap: 10px;
       }
       
       button {
-        padding: 6px 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 32px;
+        width: 32px;
         border: none;
         border-radius: 4px;
         background-color: #4caf50;
@@ -584,7 +590,11 @@ class PromptKunTexts extends HTMLElement {
 
     // ポジティブテキスト追加ボタン
     const addPositiveBtn = document.createElement("button");
-    addPositiveBtn.textContent = "add text";
+    addPositiveBtn.innerHTML = `
+<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12">
+	<path fill="#f7efef" d="M6.5 1.75a.75.75 0 0 0-1.5 0V5H1.75a.75.75 0 0 0 0 1.5H5v3.25a.75.75 0 0 0 1.5 0V6.5h3.25a.75.75 0 0 0 0-1.5H6.5z" />
+</svg>
+    `;
     addPositiveBtn.addEventListener("click", () => this._addText());
 
     // ボタンを追加
@@ -843,7 +853,12 @@ class PromptKunGroup extends HTMLElement {
 
     // グループ追加ボタン
     const addGroupBtn = document.createElement("button");
-    addGroupBtn.textContent = "add group";
+    addGroupBtn.innerHTML = `
+<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12">
+	<path fill="#f7efef" d="M6.5 1.75a.75.75 0 0 0-1.5 0V5H1.75a.75.75 0 0 0 0 1.5H5v3.25a.75.75 0 0 0 1.5 0V6.5h3.25a.75.75 0 0 0 0-1.5H6.5z" />
+</svg>
+
+    `;
     addGroupBtn.className = "add-group-btn";
     addGroupBtn.addEventListener("click", () => this._addGroup());
 
@@ -1093,6 +1108,7 @@ class PromptKunGroup extends HTMLElement {
         display: block;
         width: 100%;
         font-family: sans-serif;
+        margin-top: 4px;
       }
       
       .container {
@@ -1101,7 +1117,6 @@ class PromptKunGroup extends HTMLElement {
         width: 100%;
         border: 1px solid #ccc;
         border-radius: 4px;
-        margin-bottom: 4px;
         background-color: #f9f9f9;
         opacity: ${this._enabled ? "1" : "0.5"};
       }
@@ -1181,14 +1196,9 @@ class PromptKunGroup extends HTMLElement {
         padding: 4px;
       }
       
-      .texts-container {
-        margin-bottom: 4px;
-      }
-      
       .groups-container {
         display: flex;
         flex-direction: column;
-        gap: 4px;
       }
       
       .controls {
@@ -1198,7 +1208,11 @@ class PromptKunGroup extends HTMLElement {
       }
       
       button {
-        padding: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 32px;
+        width: 32px;
         border: none;
         border-radius: 4px;
         background-color: #4caf50;
