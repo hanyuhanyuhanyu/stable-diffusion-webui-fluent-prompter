@@ -118,18 +118,6 @@ class PromptKunText extends HTMLElement {
     return this.isNegative();
   }
 
-  // プロンプト生成用のテキストを取得（接頭辞を除去）
-  getPromptText() {
-    let txt = "";
-    if (this.isNegative()) txt = this._text.substring(NEGATIVE_PREFIX.length);
-    else txt = this._text;
-    if (!this.factor || this.factor === 1) return txt;
-    const [int, rawDec] = String(this.factor).split(".");
-    const dec = (rawDec || "00").slice(0, 2);
-    const factor = `${int}.${dec}`;
-    return `(${txt}:${factor})`;
-  }
-
   // 初回描画
   connectedCallback() {
     if (!this.shadowRoot.querySelector(".container")) {
@@ -671,27 +659,6 @@ class PromptKunTexts extends HTMLElement {
     return Array.from(this.shadowRoot.querySelectorAll("prompt-kun-text"));
   }
 
-  // プロンプト文字列の生成
-  generatePrompt() {
-    const texts = this.getAllTexts();
-    const positivePrompts = [];
-    const negativePrompts = [];
-
-    texts.forEach((text) => {
-      if (!text.enabled) return;
-
-      if (text.isNegative()) {
-        negativePrompts.push(text.getPromptText());
-      } else {
-        positivePrompts.push(text.getPromptText());
-      }
-    });
-
-    return {
-      positive: positivePrompts.join(", "),
-      negative: negativePrompts.join(", "),
-    };
-  }
   toObject() {
     return {
       texts: this.getAllTexts().map((t) => t.toObject()),
@@ -1313,60 +1280,6 @@ class PromptKunGroup extends HTMLElement {
   getTexts() {
     const container = this.shadowRoot.querySelector("prompt-kun-texts");
     return container;
-  }
-
-  // プロンプト文字列の生成
-  getPromptText() {
-    if (!this._enabled) return "";
-
-    let result = "";
-
-    // Textsからプロンプトを取得
-    const texts = this.getTexts();
-    const textsPrompt = texts.generatePrompt();
-
-    // グループがネガティブかどうかによって使用するプロンプトを選択
-    const isNegative = this.isNegative();
-    let textContent = isNegative ? textsPrompt.negative : textsPrompt.positive;
-
-    // グループ内のすべてのグループからプロンプトを取得
-    const groups = this.getAllGroups();
-    const groupPrompts = groups
-      .map((group) => group.getPromptText())
-      .filter((text) => text.length > 0);
-
-    // テキストとグループのプロンプトを結合
-    if (textContent.length > 0 || groupPrompts.length > 0) {
-      if (textContent.length > 0) {
-        result = textContent;
-      }
-
-      if (groupPrompts.length > 0) {
-        if (result.length > 0) {
-          result += ", " + groupPrompts.join(", ");
-        } else {
-          result = groupPrompts.join(", ");
-        }
-      }
-
-      // factorがある場合は適用
-      if (this.factor !== null && this.factor !== 1) {
-        const [int, rawDec] = String(this.factor).split(".");
-        const dec = (rawDec || "00").slice(0, 2);
-        const factor = `${int}.${dec}`;
-        result = `(${result}:${factor})`;
-      }
-    }
-
-    // グループ名からn!プレフィックスを削除
-    if (isNegative) {
-      const nameWithoutPrefix = this._name
-        .trim()
-        .substring(NEGATIVE_PREFIX.length);
-      return nameWithoutPrefix.length > 0 ? result : result;
-    }
-
-    return result;
   }
 
   // 現在の状態をオブジェクトとして取得
