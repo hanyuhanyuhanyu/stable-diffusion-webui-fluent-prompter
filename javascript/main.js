@@ -43,13 +43,14 @@ class PromptKunText extends HTMLElement {
     // 初期状態の設定
     this._enabled = true;
     this._text = "";
+    this._factor = null; // factorの初期値はnull（表示しない）
 
     this.render();
   }
 
   // 属性が変更された時に呼ばれるコールバック
   static get observedAttributes() {
-    return ["enabled", "text"];
+    return ["enabled", "text", "factor"];
   }
 
   attributeChangedCallback(name, oldValue, newValue) {
@@ -85,11 +86,25 @@ class PromptKunText extends HTMLElement {
     this._text = value || "";
     this.setAttribute("text", this._text);
   }
+
   get parent() {
     return this._parent;
   }
   set parent(parent) {
     this._parent = parent;
+  }
+  get factor() {
+    return this._factor;
+  }
+  set factor(val) {
+    if (isNaN(val)) {
+      this._factor = null;
+      return;
+    }
+    const rounded = String(Math.round(val * 100));
+    this._factor = Number(
+      `${rounded.slice(0, rounded.length - 2) || "0"}.${rounded.slice(-2)}`
+    );
   }
 
   // テキストがネガティブかどうかを判定
@@ -99,10 +114,14 @@ class PromptKunText extends HTMLElement {
 
   // プロンプト生成用のテキストを取得（接頭辞を除去）
   getPromptText() {
-    if (this.isNegative()) {
-      return this._text.substring(NEGATIVE_PREFIX.length);
-    }
-    return this._text;
+    let txt = "";
+    if (this.isNegative()) txt = this._text.substring(NEGATIVE_PREFIX.length);
+    else txt = this._text;
+    if (!this.factor || this.factor === 1) return txt;
+    const [int, rawDec] = String(this.factor).split(".");
+    const dec = (rawDec || "00").slice(0, 2);
+    const factor = `${int}.${dec}`;
+    return `(${txt}:${factor})`;
   }
 
   // 初回描画
@@ -144,9 +163,16 @@ class PromptKunText extends HTMLElement {
     textInput.setAttribute("placeholder", "プロンプトを入力");
     textInput.textContent = this._text;
 
+    // factor入力要素の作成（初期状態では非表示）
+    const factorInput = document.createElement("div");
+    factorInput.className = "factor-input";
+    factorInput.contentEditable = "true";
+    factorInput.setAttribute("placeholder", "1");
+
     // 要素を追加
     container.appendChild(iconDiv);
     container.appendChild(textInput);
+    container.appendChild(factorInput);
 
     this.shadowRoot.appendChild(style);
     this.shadowRoot.appendChild(container);
@@ -290,6 +316,45 @@ class PromptKunText extends HTMLElement {
     textInput.addEventListener("blur", () => {
       if (this.text.trim().length === 0) this.remove();
     });
+
+    // ホイールイベントでfactorの表示/非表示を切り替え
+    textInput.addEventListener("wheel", (e) => {
+      e.preventDefault();
+
+      if (this.factor === null) {
+        // factorが未表示の場合は表示する
+        this.factor = 1.0;
+      }
+      // factorが表示されている場合は値を増減する
+      const delta = e.deltaY < 0 ? 0.05 : -0.05;
+      this.factor = Math.max(0, this.factor + delta);
+
+      this.render();
+
+      this.dispatchEvent(
+        new CustomEvent("change", {
+          detail: { property: "factor", value: this.factor },
+        })
+      );
+    });
+
+    // factor入力
+    factorInput.addEventListener("keydown", (e) => {
+      if (e.key.toLowerCase() === "enter") {
+        e.preventDefault();
+        factorInput.blur();
+      }
+    });
+    factorInput.addEventListener("input", (e) => {
+      const value = parseFloat(e.target.textContent);
+      this.factor = Number(value);
+
+      this.dispatchEvent(
+        new CustomEvent("change", {
+          detail: { property: "factor", value: this._factor },
+        })
+      );
+    });
   }
 
   // スタイルと属性の更新（DOMを再作成せずに更新）
@@ -357,11 +422,37 @@ class PromptKunText extends HTMLElement {
           content: attr(placeholder);
           color: #999;
       }
+      
+      .factor-input {
+          border-radius: 4px;
+          outline: none;
+          text-align: center;
+          font-size: 0.9em;
+      }
+
+      .factor-input:before {
+        content: ":";
+      }
+      
+      .factor-input:focus {
+          background-color: white;
+      }
+      
+      .factor-input:empty:before {
+          content: ":" attr(placeholder);
+          color: #999;
+      }
     `;
 
     // 値の更新（フォーカスを失わないように直接値を設定）
     if (textInput.textContent !== this._text) {
       textInput.textContent = this._text;
+    }
+
+    // factorの更新
+    const factorInput = this.shadowRoot.querySelector(".factor-input");
+    if (factorInput && this.factor !== null) {
+      factorInput.textContent = this.factor.toFixed(2);
     }
   }
 
@@ -381,6 +472,7 @@ class PromptKunText extends HTMLElement {
     return {
       enabled: this.enabled,
       text: this.text,
+      factor: this.factor,
     };
   }
 
@@ -388,6 +480,7 @@ class PromptKunText extends HTMLElement {
   setData(data) {
     if (data.enabled !== undefined) this.enabled = data.enabled;
     if (data.text !== undefined) this.text = data.text;
+    if (data.factor !== undefined) this.factor = data.factor;
   }
 }
 
@@ -577,7 +670,7 @@ class PromptKunTexts extends HTMLElement {
       if (text.isNegative()) {
         negativePrompts.push(text.getPromptText());
       } else {
-        positivePrompts.push(text.text);
+        positivePrompts.push(text.getPromptText());
       }
     });
 
