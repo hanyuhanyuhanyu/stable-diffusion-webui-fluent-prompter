@@ -113,6 +113,11 @@ class PromptKunText extends HTMLElement {
     return new RegExp(`^${NEGATIVE_PREFIX}`).test(this._text.trim());
   }
 
+  // プロンプトがネガティブかどうかを判定（テキストの先頭がn!かどうか）
+  isPromptNegative() {
+    return this.isNegative();
+  }
+
   // プロンプト生成用のテキストを取得（接頭辞を除去）
   getPromptText() {
     let txt = "";
@@ -746,7 +751,7 @@ class PromptKunGroup extends HTMLElement {
   }
 
   get name() {
-    return this._name;
+    return this._name.trim().replace(new RegExp("^" + NEGATIVE_PREFIX), "");
   }
 
   set name(value) {
@@ -1085,6 +1090,11 @@ class PromptKunGroup extends HTMLElement {
     });
   }
 
+  // グループ名がネガティブかどうかを判定
+  isNegative() {
+    return new RegExp(`^${NEGATIVE_PREFIX}`).test(this._name.trim());
+  }
+
   // コンテンツの表示/非表示を切り替える
   updateContentVisibility() {
     const content = this.shadowRoot.querySelector(".group-content");
@@ -1097,11 +1107,18 @@ class PromptKunGroup extends HTMLElement {
   updateStyles() {
     if (!this.shadowRoot.querySelector(".container")) return;
 
+    const isNegative = this.isNegative();
     const style = this.shadowRoot.querySelector("style");
     const nameInput = this.shadowRoot.querySelector(".name-input");
+    const header = this.shadowRoot.querySelector(".group-header");
 
     // コンテンツの表示/非表示を更新
     this.updateContentVisibility();
+
+    // ヘッダーの背景色を更新
+    if (header) {
+      header.style.backgroundColor = isNegative ? "#ffcccc" : "#e0e0e0";
+    }
 
     // スタイルの更新
     style.textContent = `
@@ -1308,8 +1325,9 @@ class PromptKunGroup extends HTMLElement {
     const texts = this.getTexts();
     const textsPrompt = texts.generatePrompt();
 
-    // ポジティブプロンプトのみ使用
-    let textContent = textsPrompt.positive;
+    // グループがネガティブかどうかによって使用するプロンプトを選択
+    const isNegative = this.isNegative();
+    let textContent = isNegative ? textsPrompt.negative : textsPrompt.positive;
 
     // グループ内のすべてのグループからプロンプトを取得
     const groups = this.getAllGroups();
@@ -1338,6 +1356,14 @@ class PromptKunGroup extends HTMLElement {
         const factor = `${int}.${dec}`;
         result = `(${result}:${factor})`;
       }
+    }
+
+    // グループ名からn!プレフィックスを削除
+    if (isNegative) {
+      const nameWithoutPrefix = this._name
+        .trim()
+        .substring(NEGATIVE_PREFIX.length);
+      return nameWithoutPrefix.length > 0 ? result : result;
     }
 
     return result;
@@ -1394,6 +1420,7 @@ class PromptKunGroup extends HTMLElement {
       enabled: this.enabled,
       texts: this.getTexts().toObject(),
       groups: this.getAllGroups().map((g) => g.toObject()),
+      isNegative: this.isNegative(),
     };
   }
 }
