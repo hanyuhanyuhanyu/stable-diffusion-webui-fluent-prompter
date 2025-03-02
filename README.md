@@ -40,7 +40,7 @@ Open the txt2img tab of WebUI and use the extension UI displayed at the bottom o
 
 - **Add Group:** Click the Add Group button and enter a group name
 - **Add Word:** Click the Add Word button within a group and enter a word
-- **Temporal Diabling:** Right click on groups/words. The clicked DOM remains, but removed from prompt
+- **Temporal Disabling:** Right click on groups/words. The clicked DOM remains, but removed from prompt
 - **Re-Enable:** Left click on Disabled groups/words
 - **Remove Group/Word:** Right click on disabled groups/words
 - **Set Importance:** Enter a number in the importance input field next to the word
