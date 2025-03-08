@@ -3,11 +3,25 @@
   <head>
     <meta charset="utf-8" />
     <title>Prompt-kun Text Component Test</title>
+    <!-- React と ReactDOM を CDN から読み込み -->
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18.2.0/umd/react.development.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.development.js"
+    ></script>
     <script type="text/javascript">
+      // onUiLoadedのモック
       window.onUiLoaded = function (callback) {
         window.addEventListener("DOMContentLoaded", callback);
       };
-      window;
+
+      // gradioAppのモック
+      window.gradioApp = function () {
+        return document;
+      };
     </script>
   </head>
   <body>
@@ -15,6 +29,19 @@
       <div id="prompt-kun-container" class="component-test">
         <div id="prompt-kun-form" class="component-test"></div>
       </div>
+      <div
+        id="log"
+        style="
+          margin-top: 20px;
+          border: 1px solid #ccc;
+          padding: 10px;
+          max-height: 200px;
+          overflow-y: auto;
+        "
+      ></div>
+      <div id="txt2img_toprow"></div>
+      <div id="txt2img_prompt"></div>
+      <div id="txt2img_neg_prompt"></div>
     </div>
 
     <!-- コンポーネントのJavaScriptを読み込み -->
