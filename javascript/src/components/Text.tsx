@@ -31,26 +31,36 @@ export const Text: React.FC<TextProps> = ({
   onDrop,
 }) => {
   const [isEditing, setIsEditing] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
+  const [initialText, setInitialText] = useState(data.text);
+  const [initialFactor, setInitialFactor] = useState(data.factor);
+  const [isFactorFocused, setIsFactorFocused] = useState(false);
   const textInputRef = useRef<HTMLDivElement>(null);
   const factorInputRef = useRef<HTMLDivElement>(null);
 
   // テキスト入力ハンドラ
   const handleTextChange = (e: React.FormEvent<HTMLDivElement>) => {
-    const newText = e.currentTarget.textContent || "";
-    onChange({
-      ...data,
-      text: newText,
-      isNegative: isTextNegative(newText),
-    });
+    // focus中は親コンポーネントに通知しない（入力完了時のみ通知）
+    if (!isFocused) {
+      const newText = e.currentTarget.textContent || "";
+      onChange({
+        ...data,
+        text: newText,
+        isNegative: isTextNegative(newText),
+      });
+    }
   };
 
   // factor入力ハンドラ
   const handleFactorChange = (e: React.FormEvent<HTMLDivElement>) => {
-    const value = parseFloat(e.currentTarget.textContent || "1");
-    onChange({
-      ...data,
-      factor: isNaN(value) ? null : value,
-    });
+    // focus中は親コンポーネントに通知しない（入力完了時のみ通知）
+    if (!isFactorFocused) {
+      const value = parseFloat(e.currentTarget.textContent || "1");
+      onChange({
+        ...data,
+        factor: isNaN(value) ? null : value,
+      });
+    }
   };
 
   // 有効/無効の切り替え
@@ -84,12 +94,57 @@ export const Text: React.FC<TextProps> = ({
     }
   };
 
-  // テキストが空の場合は削除
-  const handleBlur = () => {
-    if ((data.text || "").trim().length === 0) {
-      onDelete();
-    }
+  // テキストのフォーカス時
+  const handleTextFocus = () => {
+    setIsFocused(true);
+    setInitialText(textInputRef.current?.textContent || "");
+    setIsEditing(true);
+  };
+
+  // テキストのブラー時
+  const handleTextBlur = () => {
+    setIsFocused(false);
     setIsEditing(false);
+
+    const newText = textInputRef.current?.textContent || "";
+
+    // テキストが空の場合は削除
+    if (newText.trim().length === 0) {
+      onDelete();
+      return;
+    }
+
+    // 変更があった場合のみ通知
+    if (newText !== initialText) {
+      onChange({
+        ...data,
+        text: newText,
+        isNegative: isTextNegative(newText),
+      });
+    }
+  };
+
+  // factorのフォーカス時
+  const handleFactorFocus = () => {
+    setIsFactorFocused(true);
+    setInitialFactor(data.factor);
+  };
+
+  // factorのブラー時
+  const handleFactorBlur = () => {
+    setIsFactorFocused(false);
+
+    const newFactorText = factorInputRef.current?.textContent || "";
+    const newFactor = parseFloat(newFactorText);
+    const newFactorValue = isNaN(newFactor) ? null : newFactor;
+
+    // 変更があった場合のみ通知
+    if (newFactorValue !== initialFactor) {
+      onChange({
+        ...data,
+        factor: newFactorValue,
+      });
+    }
   };
 
   // ドラッグハンドルのマウスダウンイベント
@@ -215,8 +270,8 @@ export const Text: React.FC<TextProps> = ({
         suppressContentEditableWarning
         onInput={handleTextChange}
         onKeyDown={handleKeyDown}
-        onFocus={() => setIsEditing(true)}
-        onBlur={handleBlur}
+        onFocus={handleTextFocus}
+        onBlur={handleTextBlur}
       >
         {data.text}
       </div>
@@ -229,7 +284,8 @@ export const Text: React.FC<TextProps> = ({
         suppressContentEditableWarning
         onInput={handleFactorChange}
         onKeyDown={handleFactorKeyDown}
-        onBlur={() => setIsEditing(false)}
+        onFocus={handleFactorFocus}
+        onBlur={handleFactorBlur}
         data-before=":"
       >
         {data.factor !== null ? data.factor.toFixed(2) : ""}

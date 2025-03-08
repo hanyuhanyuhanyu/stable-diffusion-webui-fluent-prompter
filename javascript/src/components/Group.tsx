@@ -35,24 +35,79 @@ export const Group: React.FC<GroupProps> = ({
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const nameInputRef = useRef<HTMLDivElement>(null);
   const factorInputRef = useRef<HTMLDivElement>(null);
+  const [isNameFocused, setIsNameFocused] = useState(false);
+  const [initialName, setInitialName] = useState(data.name);
+  const [isFactorFocused, setIsFactorFocused] = useState(false);
+  const [initialFactor, setInitialFactor] = useState(data.factor);
 
   // 名前入力ハンドラ
   const handleNameChange = (e: React.FormEvent<HTMLDivElement>) => {
-    const newName = e.currentTarget.textContent || "Group";
-    onChange({
-      ...data,
-      name: newName,
-      isNegative: isTextNegative(newName),
-    });
+    // focus中は親コンポーネントに通知しない（入力完了時のみ通知）
+    if (!isNameFocused) {
+      const newName = e.currentTarget.textContent || "Group";
+      onChange({
+        ...data,
+        name: newName,
+        isNegative: isTextNegative(newName),
+      });
+    }
   };
 
   // factor入力ハンドラ
   const handleFactorChange = (e: React.FormEvent<HTMLDivElement>) => {
-    const value = parseFloat(e.currentTarget.textContent || "1");
-    onChange({
-      ...data,
-      factor: isNaN(value) ? null : value,
-    });
+    // focus中は親コンポーネントに通知しない（入力完了時のみ通知）
+    if (!isFactorFocused) {
+      const value = parseFloat(e.currentTarget.textContent || "1");
+      onChange({
+        ...data,
+        factor: isNaN(value) ? null : value,
+      });
+    }
+  };
+
+  // 名前のフォーカス時
+  const handleNameFocus = () => {
+    setIsNameFocused(true);
+    setInitialName(nameInputRef.current?.textContent || "Group");
+  };
+
+  // 名前のブラー時
+  const handleNameBlur = () => {
+    setIsNameFocused(false);
+
+    const newName = nameInputRef.current?.textContent || "Group";
+
+    // 変更があった場合のみ通知
+    if (newName !== initialName) {
+      onChange({
+        ...data,
+        name: newName,
+        isNegative: isTextNegative(newName),
+      });
+    }
+  };
+
+  // factorのフォーカス時
+  const handleFactorFocus = () => {
+    setIsFactorFocused(true);
+    setInitialFactor(data.factor);
+  };
+
+  // factorのブラー時
+  const handleFactorBlur = () => {
+    setIsFactorFocused(false);
+
+    const newFactorText = factorInputRef.current?.textContent || "";
+    const newFactor = parseFloat(newFactorText);
+    const newFactorValue = isNaN(newFactor) ? null : newFactor;
+
+    // 変更があった場合のみ通知
+    if (newFactorValue !== initialFactor) {
+      onChange({
+        ...data,
+        factor: newFactorValue,
+      });
+    }
   };
 
   // 有効/無効の切り替え
@@ -414,6 +469,8 @@ export const Group: React.FC<GroupProps> = ({
             contentEditable
             suppressContentEditableWarning
             onInput={handleNameChange}
+            onFocus={handleNameFocus}
+            onBlur={handleNameBlur}
           >
             {data.name}
           </div>
@@ -426,6 +483,8 @@ export const Group: React.FC<GroupProps> = ({
             suppressContentEditableWarning
             onInput={handleFactorChange}
             onKeyDown={handleFactorKeyDown}
+            onFocus={handleFactorFocus}
+            onBlur={handleFactorBlur}
             data-before=":"
           >
             {data.factor !== null ? data.factor.toFixed(2) : ""}
