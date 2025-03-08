@@ -1477,6 +1477,7 @@ class PromptKunContainer extends HTMLElement {
         display: flex;
         justify-content: flex-end;
         margin-top: 4px;
+        gap: 4px;
       }
       
       button {
@@ -1484,7 +1485,6 @@ class PromptKunContainer extends HTMLElement {
         align-items: center;
         justify-content: center;
         height: 32px;
-        width: 32px;
         border: none;
         border-radius: 4px;
         background-color: #2a623a;
@@ -1509,8 +1509,38 @@ class PromptKunContainer extends HTMLElement {
     const controls = document.createElement("div");
     controls.className = "controls";
 
+    // クリップボードにコピーするボタン
+    const copyButton = document.createElement("button");
+    copyButton.textContent = "Copy to clipboard";
+    copyButton.className = "button";
+    copyButton.addEventListener("click", () => {
+      navigator.clipboard.writeText(JSON.stringify(this.toObject()));
+    });
+
+    // クリップボードの内容を反映するボタン
+    const pasteButton = document.createElement("button");
+    pasteButton.textContent = "Read from file";
+    pasteButton.className = "button";
+    pasteButton.addEventListener("click", () => {
+      const inp = document.createElement("input");
+      inp.type = "file";
+      inp.addEventListener("change", (event) => {
+        const file = event.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            const content = e.target.result;
+            this.fromObject(JSON.parse(content));
+          };
+          reader.readAsText(file);
+        }
+      });
+      inp.click();
+    });
+
     // グループ追加ボタン
     const addGroupBtn = document.createElement("button");
+    addGroupBtn.style = "width: 32px;";
     addGroupBtn.innerHTML = `
 <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12">
 	<path fill="#f7efef" d="M6.5 1.75a.75.75 0 0 0-1.5 0V5H1.75a.75.75 0 0 0 0 1.5H5v3.25a.75.75 0 0 0 1.5 0V6.5h3.25a.75.75 0 0 0 0-1.5H6.5z" />
@@ -1519,6 +1549,8 @@ class PromptKunContainer extends HTMLElement {
     addGroupBtn.addEventListener("click", () => this._addGroup());
 
     // ボタンを追加
+    controls.appendChild(copyButton);
+    controls.appendChild(pasteButton);
     controls.appendChild(addGroupBtn);
 
     // コンテナに追加
@@ -1648,7 +1680,6 @@ function initPromptKun(formRootId, logElementId = null) {
 
   const setVal = (id, value) => {
     const element = gradioApp().querySelector(`#${id} textarea`);
-    console.log(element, value);
     if (!element) return;
     element.value = value;
     let e = new Event("input", { bubbles: true });
