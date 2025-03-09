@@ -1,6 +1,5 @@
-import React, { useState, useRef, useEffect, useImperativeHandle } from "react";
+import React, { useRef, useEffect, useImperativeHandle } from "react";
 import type { TextData } from "../types";
-import { isTextNegative } from "../utils/prompt";
 import DragSVG from "./atom/DragSVG";
 import { css } from "@emotion/css";
 
