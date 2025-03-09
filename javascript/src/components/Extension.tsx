@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import { Container } from "./Container";
 import { logger } from "../utils/logger";
+import { TextsAndGroups } from "./TextsAndGroups";
 
 /**
  * 拡張機能のルートコンポーネント
@@ -18,7 +19,8 @@ export const Extension: React.FC = () => {
 
   return (
     <div className="prompt-kun-extension">
-      <Container />
+      <TextsAndGroups />
+      {/* <Container /> */}
     </div>
   );
 };

@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useImperativeHandle } from "react";
+import React, { useRef, useEffect, useImperativeHandle, useState } from "react";
 import type { TextData } from "../types";
 import DragSVG from "./atom/DragSVG";
 import { css } from "@emotion/css";
@@ -8,14 +8,10 @@ interface TextProps {
   isNegative?: boolean;
   ref?: React.Ref<unknown>;
   onChange: (data: TextData) => void;
-  removeRequested: () => void;
+  removeRequested: (id: string) => void;
   draggable?: boolean;
-  newInputRequest?: () => void;
-  onDragStart?: (e: React.DragEvent<HTMLDivElement>) => void;
-  onDragEnd?: (e: React.DragEvent<HTMLDivElement>) => void;
-  onDragOver?: (e: React.DragEvent<HTMLDivElement>) => void;
-  onDragLeave?: (e: React.DragEvent<HTMLDivElement>) => void;
-  onDrop?: (e: React.DragEvent<HTMLDivElement>) => void;
+  newInputRequest?: (id: string) => void;
+  onDragEnd?: (e: React.DragEvent<HTMLDivElement>, id: string) => void;
 }
 const styles = {
   factor: css`
@@ -33,26 +29,24 @@ export const Text: React.FC<TextProps> = ({
   initial,
   ref,
   onChange,
-  removeRequested: onDelete,
-  draggable,
+  removeRequested,
   newInputRequest,
-  onDragStart,
   onDragEnd,
-  onDragOver,
-  onDragLeave,
-  onDrop,
 }) => {
   const baseRef = useRef<HTMLDivElement>(null);
   const textInputRef = useRef<HTMLDivElement>(null);
   const factorInputRef = useRef<HTMLDivElement>(null);
+  const [draggable, setDraggable] = useState(false);
   const data = useRef(
     Object.assign(
       {
+        __type: "text",
+        id: "",
         enabled: false,
         text: "",
         factor: null,
         isNegative: false,
-      } as TextData,
+      } satisfies TextData,
       initial
     )
   );
@@ -71,6 +65,10 @@ export const Text: React.FC<TextProps> = ({
     const newState = Object.assign({}, data.current, d);
     if (JSON.stringify(newState) === JSON.stringify(data.current)) return;
     data.current = newState;
+    if (textInputRef.current) textInputRef.current.textContent = newState.text;
+    if (factorInputRef.current)
+      factorInputRef.current.textContent =
+        newState.factor === null ? "" : String(newState.factor);
     onChange(data.current);
   };
 
@@ -94,9 +92,11 @@ export const Text: React.FC<TextProps> = ({
   // キーボードイベント
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
     if (e.key === "Enter") {
+      e.preventDefault();
       blur();
       if (e.ctrlKey) return;
-      newInputRequest?.();
+      if (data.current.text.trim().length === 0) return;
+      newInputRequest?.(data.current.id);
     } else if (e.key === "Escape") {
       blur();
     } else {
@@ -113,11 +113,11 @@ export const Text: React.FC<TextProps> = ({
 
     // テキストが空の場合は削除
     if (newText.trim().length === 0) {
-      onDelete();
+      removeRequested(data.current.id);
       return;
     }
     if (newText === data.current.text) return;
-    update({ text: newText });
+    update({ text: newText.replace(/[\n\r]/g, "") });
   };
 
   // factorのブラー時
@@ -128,22 +128,21 @@ export const Text: React.FC<TextProps> = ({
     const newFactor = parseFloat(newFactorText);
     const newFactorValue =
       !newFactorText || isNaN(newFactor) ? null : newFactor;
-    console.log(newFactorValue);
     current.textContent =
-      newFactorValue === null ? null : String(newFactorValue);
+      newFactorValue === null
+        ? null
+        : String(newFactorValue).replace(/[\n\r]/g, "");
     update({ factor: newFactorValue });
   };
 
   // ドラッグハンドルのマウスダウンイベント
   const handleDragHandleMouseDown = (e: React.MouseEvent) => {
     // 親要素をdraggableに設定
-    const current = baseRef.current;
-    if (!current) return;
-    current.setAttribute("draggable", "true");
+    setDraggable(true);
 
     // マウスアップ時にdraggable属性を削除
     const mouseUpHandler = () => {
-      current.removeAttribute("draggable");
+      setDraggable(false);
       document.removeEventListener("mouseup", mouseUpHandler);
     };
     document.addEventListener("mouseup", mouseUpHandler);
@@ -153,7 +152,7 @@ export const Text: React.FC<TextProps> = ({
   const handleContextMenu = (e: React.MouseEvent) => {
     e.preventDefault();
     if (!data.current.enabled) {
-      onDelete();
+      removeRequested(data.current.id);
       return;
     }
     disable();
@@ -217,15 +216,15 @@ export const Text: React.FC<TextProps> = ({
     backgroundColor: "transparent",
   };
 
+  useEffect(() => {
+    if (!initial?.text) textInputRef.current?.focus();
+  }, []);
   return (
     <div
       style={containerStyle}
       draggable={draggable}
-      onDragStart={onDragStart}
-      onDragEnd={onDragEnd}
-      onDragOver={onDragOver}
-      onDragLeave={onDragLeave}
-      onDrop={onDrop}
+      onDragStart={console.log}
+      onDragEnd={(e) => onDragEnd?.(e, data.current.id)}
       onClick={handleClick}
       onContextMenu={handleContextMenu}
       ref={baseRef}

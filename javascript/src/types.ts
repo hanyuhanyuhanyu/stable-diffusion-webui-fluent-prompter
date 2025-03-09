@@ -7,6 +7,8 @@ declare function onUiLoaded(callback: () => unknown): void;
  * テキストデータの型定義
  */
 export interface TextData {
+  __type: "text";
+  id: string;
   enabled: boolean;
   text: string;
   factor: number | null;
@@ -24,6 +26,8 @@ export interface TextsData {
  * グループデータの型定義
  */
 export interface GroupData {
+  __type: "group";
+  id: string;
   enabled: boolean;
   name: string;
   factor: number | null;
