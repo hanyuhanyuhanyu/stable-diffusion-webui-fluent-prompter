@@ -1,111 +1,115 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useImperativeHandle } from "react";
 import type { TextData } from "../types";
 import { isTextNegative } from "../utils/prompt";
-import { NEGATIVE_PREFIX } from "../constants";
+import DragSVG from "./atom/DragSVG";
+import { css } from "@emotion/css";
 
 interface TextProps {
-  data: TextData;
+  initial?: TextData;
+  isNegative?: boolean;
+  ref?: React.Ref<unknown>;
   onChange: (data: TextData) => void;
-  onDelete: () => void;
+  removeRequested: () => void;
   draggable?: boolean;
+  newInputRequest?: () => void;
   onDragStart?: (e: React.DragEvent<HTMLDivElement>) => void;
   onDragEnd?: (e: React.DragEvent<HTMLDivElement>) => void;
   onDragOver?: (e: React.DragEvent<HTMLDivElement>) => void;
   onDragLeave?: (e: React.DragEvent<HTMLDivElement>) => void;
   onDrop?: (e: React.DragEvent<HTMLDivElement>) => void;
 }
+const styles = {
+  factor: css`
+    &::before {
+      content: ":";
+    }
+  `,
+};
 
 /**
  * テキストコンポーネント
  * 個別のプロンプトテキストを表示・編集するためのコンポーネント
  */
 export const Text: React.FC<TextProps> = ({
-  data,
+  initial,
+  ref,
   onChange,
-  onDelete,
+  removeRequested: onDelete,
   draggable,
+  newInputRequest,
   onDragStart,
   onDragEnd,
   onDragOver,
   onDragLeave,
   onDrop,
 }) => {
-  const [isEditing, setIsEditing] = useState(false);
-  const [isFocused, setIsFocused] = useState(false);
-  const [initialText, setInitialText] = useState(data.text);
-  const [initialFactor, setInitialFactor] = useState(data.factor);
-  const [isFactorFocused, setIsFactorFocused] = useState(false);
+  const baseRef = useRef<HTMLDivElement>(null);
   const textInputRef = useRef<HTMLDivElement>(null);
   const factorInputRef = useRef<HTMLDivElement>(null);
+  const data = useRef(
+    Object.assign(
+      {
+        enabled: false,
+        text: "",
+        factor: null,
+        isNegative: false,
+      } as TextData,
+      initial
+    )
+  );
+  useImperativeHandle(
+    ref,
+    () => {
+      if (!ref) return {};
+      return {
+        focus: () => textInputRef.current?.focus(),
+      };
+    },
+    []
+  );
 
-  // テキスト入力ハンドラ
-  const handleTextChange = (e: React.FormEvent<HTMLDivElement>) => {
-    // focus中は親コンポーネントに通知しない（入力完了時のみ通知）
-    if (!isFocused) {
-      const newText = e.currentTarget.textContent || "";
-      onChange({
-        ...data,
-        text: newText,
-        isNegative: isTextNegative(newText),
-      });
-    }
+  const update = (d: Partial<TextData>) => {
+    const newState = Object.assign({}, data.current, d);
+    if (JSON.stringify(newState) === JSON.stringify(data.current)) return;
+    data.current = newState;
+    onChange(data.current);
   };
 
-  // factor入力ハンドラ
-  const handleFactorChange = (e: React.FormEvent<HTMLDivElement>) => {
-    // focus中は親コンポーネントに通知しない（入力完了時のみ通知）
-    if (!isFactorFocused) {
-      const value = parseFloat(e.currentTarget.textContent || "1");
-      onChange({
-        ...data,
-        factor: isNaN(value) ? null : value,
-      });
-    }
+  const negate = () => update({ isNegative: !data.current.isNegative });
+
+  const enable = () => update({ enabled: true });
+  const disable = () => update({ enabled: false });
+  const blur = () => {
+    textInputRef.current?.blur();
+    factorInputRef.current?.blur();
   };
 
-  // 有効/無効の切り替え
-  const handleToggleEnabled = () => {
-    onChange({
-      ...data,
-      enabled: !data.enabled,
-    });
-  };
-
-  // 削除
-  const handleDelete = () => {
-    onDelete();
-  };
+  useEffect(() => {
+    if (!initial) return;
+    if (textInputRef.current) textInputRef.current.textContent = initial.text;
+    if (factorInputRef.current)
+      factorInputRef.current.textContent =
+        initial.factor === null ? "" : String(initial.factor);
+  }, [initial]);
 
   // キーボードイベント
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
     if (e.key === "Enter") {
-      e.preventDefault();
-      textInputRef.current?.blur();
+      blur();
+      if (e.ctrlKey) return;
+      newInputRequest?.();
     } else if (e.key === "Escape") {
-      textInputRef.current?.blur();
+      blur();
+    } else {
+      return;
     }
   };
 
   // factorのキーボードイベント
-  const handleFactorKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      factorInputRef.current?.blur();
-    }
-  };
-
-  // テキストのフォーカス時
-  const handleTextFocus = () => {
-    setIsFocused(true);
-    setInitialText(textInputRef.current?.textContent || "");
-    setIsEditing(true);
-  };
+  const handleFactorKeyDown = handleKeyDown;
 
   // テキストのブラー時
   const handleTextBlur = () => {
-    setIsFocused(false);
-    setIsEditing(false);
-
     const newText = textInputRef.current?.textContent || "";
 
     // テキストが空の場合は削除
@@ -113,53 +117,34 @@ export const Text: React.FC<TextProps> = ({
       onDelete();
       return;
     }
-
-    // 変更があった場合のみ通知
-    if (newText !== initialText) {
-      onChange({
-        ...data,
-        text: newText,
-        isNegative: isTextNegative(newText),
-      });
-    }
-  };
-
-  // factorのフォーカス時
-  const handleFactorFocus = () => {
-    setIsFactorFocused(true);
-    setInitialFactor(data.factor);
+    if (newText === data.current.text) return;
+    update({ text: newText });
   };
 
   // factorのブラー時
   const handleFactorBlur = () => {
-    setIsFactorFocused(false);
-
-    const newFactorText = factorInputRef.current?.textContent || "";
+    const current = factorInputRef.current;
+    if (!current) return;
+    const newFactorText = current.textContent?.trim() || "";
     const newFactor = parseFloat(newFactorText);
-    const newFactorValue = isNaN(newFactor) ? null : newFactor;
-
-    // 変更があった場合のみ通知
-    if (newFactorValue !== initialFactor) {
-      onChange({
-        ...data,
-        factor: newFactorValue,
-      });
-    }
+    const newFactorValue =
+      !newFactorText || isNaN(newFactor) ? null : newFactor;
+    console.log(newFactorValue);
+    current.textContent =
+      newFactorValue === null ? null : String(newFactorValue);
+    update({ factor: newFactorValue });
   };
 
   // ドラッグハンドルのマウスダウンイベント
   const handleDragHandleMouseDown = (e: React.MouseEvent) => {
     // 親要素をdraggableに設定
-    const parent = e.currentTarget.parentElement;
-    if (parent) {
-      parent.setAttribute("draggable", "true");
-    }
+    const current = baseRef.current;
+    if (!current) return;
+    current.setAttribute("draggable", "true");
 
     // マウスアップ時にdraggable属性を削除
     const mouseUpHandler = () => {
-      if (parent) {
-        parent.removeAttribute("draggable");
-      }
+      current.removeAttribute("draggable");
       document.removeEventListener("mouseup", mouseUpHandler);
     };
     document.addEventListener("mouseup", mouseUpHandler);
@@ -168,22 +153,21 @@ export const Text: React.FC<TextProps> = ({
   // コンテキストメニュー（右クリック）
   const handleContextMenu = (e: React.MouseEvent) => {
     e.preventDefault();
-    if (data.enabled) {
-      // 有効 → 無効
-      handleToggleEnabled();
-    } else {
-      // 無効 → 削除
-      handleDelete();
+    if (!data.current.enabled) {
+      onDelete();
+      return;
     }
+    disable();
   };
 
   // クリックイベント
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!data.enabled) {
-      // 無効時に有効化
-      handleToggleEnabled();
-    }
+    // on alt,negate
+    if (e.altKey) negate();
+    // on ctrl, choose
+    // TODO: implement later
+    enable();
   };
 
   // スタイルの計算
@@ -193,9 +177,9 @@ export const Text: React.FC<TextProps> = ({
     padding: "4px",
     border: "1px solid #333",
     borderRadius: "4px",
-    backgroundColor: isTextNegative(data.text) ? "#3a273a" : "#1a3a1a",
+    backgroundColor: data.current.isNegative ? "#3a273a" : "#1a3a1a",
     color: "#ddd",
-    opacity: data.enabled ? 1 : 0.5,
+    opacity: data.current.enabled ? 1 : 0.5,
     cursor: "pointer",
     userSelect: "none",
   };
@@ -213,26 +197,25 @@ export const Text: React.FC<TextProps> = ({
     flex: 1,
     minWidth: "50px",
     padding: "2px",
-    borderRadius: "4px",
     border: "none",
     borderBottom: "1px solid #555",
     outline: "none",
     whiteSpace: "nowrap",
     overflow: "hidden",
     textOverflow: "ellipsis",
-    textDecoration: !data.enabled ? "line-through" : "",
-    backgroundColor: isEditing ? "#1c2333" : "transparent",
+    textDecoration: !data.current.enabled ? "line-through" : "",
     color: "#ddd",
   };
 
   const factorInputStyle: React.CSSProperties = {
-    borderRadius: "4px",
+    display: "inline-block",
+    minWidth: "2em",
+    padding: "2px",
+    border: "none",
+    borderBottom: "1px solid #555",
     outline: "none",
-    textAlign: "center",
-    fontSize: "0.9em",
     color: "#ddd",
     backgroundColor: "transparent",
-    display: data.factor !== null ? "block" : "none",
   };
 
   return (
@@ -246,20 +229,11 @@ export const Text: React.FC<TextProps> = ({
       onDrop={onDrop}
       onClick={handleClick}
       onContextMenu={handleContextMenu}
+      ref={baseRef}
     >
       {/* ドラッグハンドル */}
       <div style={dragIconStyle} onMouseDown={handleDragHandleMouseDown}>
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="16px"
-          height="16px"
-          viewBox="0 0 512 512"
-        >
-          <path
-            fill="#ddd"
-            d="M278.6 9.4c-12.5-12.5-32.8-12.5-45.3 0l-64 64c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l9.4-9.4V224H109.3l9.4-9.4c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-64 64c-12.5 12.5-12.5 32.8 0 45.3l64 64c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3l-9.4-9.4l114.7.1v114.7l-9.4-9.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l64 64c12.5 12.5 32.8 12.5 45.3 0l64-64c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-9.4 9.4l.1-114.7h114.7l-9.4 9.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l64-64c12.5-12.5 12.5-32.8 0-45.3l-64-64c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l9.4 9.4L288 224V109.3l9.4 9.4c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3l-64-64z"
-          />
-        </svg>
+        <DragSVG />
       </div>
 
       {/* テキスト入力 */}
@@ -268,28 +242,21 @@ export const Text: React.FC<TextProps> = ({
         style={textInputStyle}
         contentEditable
         suppressContentEditableWarning
-        onInput={handleTextChange}
         onKeyDown={handleKeyDown}
-        onFocus={handleTextFocus}
         onBlur={handleTextBlur}
-      >
-        {data.text}
-      </div>
+      />
 
       {/* factor入力 */}
       <div
         ref={factorInputRef}
+        className={styles.factor}
         style={factorInputStyle}
         contentEditable
         suppressContentEditableWarning
-        onInput={handleFactorChange}
         onKeyDown={handleFactorKeyDown}
-        onFocus={handleFactorFocus}
         onBlur={handleFactorBlur}
         data-before=":"
-      >
-        {data.factor !== null ? data.factor.toFixed(2) : ""}
-      </div>
+      ></div>
     </div>
   );
 };

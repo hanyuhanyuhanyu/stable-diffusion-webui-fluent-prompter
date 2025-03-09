@@ -208,9 +208,9 @@ export const Texts: React.FC<TextsProps> = ({ data, onChange }) => {
         <Text
           key={index}
           data-index={index}
-          data={textData}
+          initial={textData}
           onChange={(newData) => handleTextChange(index, newData)}
-          onDelete={() => handleTextDelete(index)}
+          removeRequested={() => handleTextDelete(index)}
           onDragStart={handleDragStart(index)}
           onDragEnd={handleDragEnd(index)}
           onDragOver={handleDragOver(index)}
